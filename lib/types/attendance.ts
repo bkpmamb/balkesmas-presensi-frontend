@@ -1,5 +1,6 @@
 // lib/types/attendance.ts
 
+import type { LucideIcon } from "lucide-react";
 export interface Shift {
   _id: string;
   name: string;
@@ -86,4 +87,51 @@ export interface ManualEntryFormValues {
   clockIn: string; // HH:mm
   clockOut?: string; // HH:mm
   notes?: string;
+}
+
+export interface AttendanceSummary {
+  totalAttendances: number;
+  totalOnTime: number;
+  totalLate: number;
+  totalEarlyClockOut: number;
+  totalNormalClockOut: number;
+  totalNotClockedOut: number;
+  averageWorkMinutes: number;
+}
+
+export interface AttendancePagination {
+  totalData: number;
+  totalPages: number;
+  currentPage: number;
+  limit: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
+// UI Configuration Types
+export interface AttendanceDialogState {
+  manualEntry: boolean;
+  view: boolean;
+  delete: boolean;
+}
+
+export interface AttendanceFilters {
+  search: string;
+  startDate: string;
+  endDate: string;
+  clockInStatus: string | undefined;
+}
+
+export interface AttendanceStatCardConfig {
+  title: string;
+  getValue: (summary: AttendanceSummary | undefined) => number;
+  getDescription: (summary: AttendanceSummary | undefined) => string;
+  icon: LucideIcon;
+  colorClass?: string;
+}
+
+export interface ExportParams {
+  startDate?: string;
+  endDate?: string;
+  clockInStatus?: string;
 }
