@@ -1,4 +1,5 @@
 // src/types/employee.ts
+import type { LucideIcon } from "lucide-react";
 
 export interface Category {
   _id: string;
@@ -63,4 +64,30 @@ export interface PaginationData {
   limit: number;
   hasNextPage: boolean;
   hasPrevPage: boolean;
+}
+
+export interface EmployeePagination {
+  totalData: number;
+  totalPages: number;
+  currentPage: number;
+  limit: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+export interface EmployeeDialogState {
+  create: boolean;
+  edit: boolean;
+  delete: boolean;
+}
+
+export interface EmployeeFilters {
+  search: string;
+  category: string;
+  status: string | undefined;
+}
+
+export interface EmployeeStatCard {
+  id: string;
+  title: string;
+  count: number;
 }
