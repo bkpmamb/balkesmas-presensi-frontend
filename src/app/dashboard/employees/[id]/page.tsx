@@ -49,8 +49,6 @@ export default function EmployeeDetailPage({
     return <EmployeeNotFound />;
   }
 
-  // accept invitation
-
   return (
     <div className="space-y-6">
       <EmployeeDetailHeader
