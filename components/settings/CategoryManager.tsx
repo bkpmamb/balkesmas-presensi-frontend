@@ -154,7 +154,7 @@ export function CategoryManager({
                 <TableHead className="w-12.5">#</TableHead>
                 <TableHead>Nama Kategori</TableHead>
                 <TableHead>Prefix</TableHead>
-                <TableHead>Nomor Terakhir</TableHead>
+                {/* <TableHead>Nomor Terakhir</TableHead> */}
                 <TableHead>Format ID</TableHead>
                 <TableHead className="w-50">Aksi</TableHead>
               </TableRow>
@@ -179,9 +179,9 @@ export function CategoryManager({
                     <TableCell>
                       <Badge variant="secondary">{category.prefix}</Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    {/* <TableCell className="text-muted-foreground">
                       {category.nextNumber}
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell>
                       <code className="text-sm bg-gray-100 px-2 py-1 rounded">
                         {category.prefix}

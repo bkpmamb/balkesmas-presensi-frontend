@@ -3,7 +3,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -25,13 +25,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { MapPin, Navigation, Loader2 } from "lucide-react";
-import type { GPSFormValues, Settings } from "@/lib/types/settings";
+import type { Settings } from "@/lib/types/settings";
 
 const gpsSchema = z.object({
   latitude: z.coerce.number().min(-90).max(90),
   longitude: z.coerce.number().min(-180).max(180),
   maxDistance: z.coerce.number().min(1),
 });
+
+type GPSFormValues = z.infer<typeof gpsSchema>;
 
 interface GPSSettingsProps {
   settings: Settings;
@@ -46,7 +48,7 @@ export function GPSSettings({
 }: GPSSettingsProps) {
   const [gettingLocation, setGettingLocation] = useState(false);
 
-  const form = useForm<GPSFormValues>({
+  const form = useForm({
     resolver: zodResolver(gpsSchema),
     defaultValues: {
       latitude: settings.targetLatitude,
@@ -78,6 +80,17 @@ export function GPSSettings({
     );
   };
 
+  const latitude = useWatch({ control: form.control, name: "latitude" }) as
+    | number
+    | null;
+  const longitude = useWatch({ control: form.control, name: "longitude" }) as
+    | number
+    | null;
+  const maxDistance = useWatch({
+    control: form.control,
+    name: "maxDistance",
+  }) as number | null;
+
   return (
     <Card>
       <CardHeader>
@@ -103,9 +116,12 @@ export function GPSSettings({
                       <Input
                         type="number"
                         step="any"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value)}
                         placeholder="-6.9175"
+                        value={String(field.value ?? "")}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
                       />
                     </FormControl>
                     <FormMessage />
@@ -124,8 +140,11 @@ export function GPSSettings({
                         type="number"
                         step="any"
                         placeholder="107.6191"
-                        {...field}
+                        value={String(field.value ?? "")}
                         onChange={(e) => field.onChange(e.target.value)}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
                       />
                     </FormControl>
                     <FormMessage />
@@ -145,8 +164,11 @@ export function GPSSettings({
                       type="number"
                       min="1"
                       placeholder="100"
-                      {...field}
+                      value={String(field.value ?? "")}
                       onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
                     />
                   </FormControl>
                   <FormDescription>
@@ -187,9 +209,7 @@ export function GPSSettings({
             height="300"
             style={{ border: 0 }}
             loading="lazy"
-            src={`https://maps.google.com/maps?q=${form.watch(
-              "latitude"
-            )},${form.watch("longitude")}&z=15&output=embed`}
+            src={`https://maps.google.com/maps?q=${latitude},${longitude}&z=15&output=embed`}
           ></iframe>
         </div>
 
@@ -199,15 +219,11 @@ export function GPSSettings({
             📍 Lokasi Saat Ini:
           </p>
           <p className="text-sm text-blue-700">
-            Lat: {form.watch("latitude")} | Long: {form.watch("longitude")}
+            Lat: {latitude} | Long: {longitude}
           </p>
-          <p className="text-sm text-blue-700">
-            Radius: {form.watch("maxDistance")} meter
-          </p>
+          <p className="text-sm text-blue-700">Radius: {maxDistance} meter</p>
           <a
-            href={`https://www.google.com/maps?q=${form.watch(
-              "latitude"
-            )},${form.watch("longitude")}`}
+            href={`https://www.google.com/maps?q=${latitude},${longitude}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-blue-600 underline mt-2 inline-block"
