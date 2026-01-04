@@ -49,8 +49,6 @@ export default function EmployeeDetailPage({
     return <EmployeeNotFound />;
   }
 
-  console.log("Employee ID:", id);
-
   return (
     <div className="space-y-6">
       <EmployeeDetailHeader
