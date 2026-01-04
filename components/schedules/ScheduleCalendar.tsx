@@ -25,18 +25,36 @@ const SHIFT_COLORS: { [key: string]: string } = {
   default: "bg-gray-100 text-gray-800 border-gray-200",
 };
 
-function getShiftColor(shiftName: string): string {
-  const name = shiftName.toLowerCase();
-  if (name.includes("pagi")) return SHIFT_COLORS.pagi;
-  if (name.includes("siang")) return SHIFT_COLORS.siang;
-  if (name.includes("malam")) return SHIFT_COLORS.malam;
-  return SHIFT_COLORS.default;
-}
-
 interface ScheduleCalendarProps {
   schedules: Schedule[];
   onDelete: (schedule: Schedule) => void;
 }
+
+// Helper function to safely get user name
+const getUserName = (schedule: Schedule): string => {
+  return schedule.user?.name ?? "User Tidak Ditemukan";
+};
+
+// Helper function to safely get user employeeId
+const getUserEmployeeId = (schedule: Schedule): string => {
+  return schedule.user?.employeeId ?? "-";
+};
+
+// Helper function to safely get shift name
+const getShiftName = (schedule: Schedule): string => {
+  return schedule.shift?.name ?? "Shift Tidak Ditemukan";
+};
+
+// Helper function to get shift color
+const getShiftColor = (shiftName: string): string => {
+  const lowerName = shiftName.toLowerCase();
+
+  if (lowerName.includes("pagi")) return SHIFT_COLORS.pagi;
+  if (lowerName.includes("siang")) return SHIFT_COLORS.siang;
+  if (lowerName.includes("malam")) return SHIFT_COLORS.malam;
+
+  return SHIFT_COLORS.default;
+};
 
 export function ScheduleCalendar({
   schedules,
@@ -75,23 +93,27 @@ export function ScheduleCalendar({
               day.schedules.map((schedule) => (
                 <div
                   key={schedule._id}
-                  className={cn(
-                    "p-2 rounded-lg border text-xs group relative",
-                    getShiftColor(schedule.shift.name)
-                  )}
+                  className={`${getShiftColor(
+                    getShiftName(schedule)
+                  )} relative group border rounded-lg p-2 space-y-1`}
                 >
                   {/* Employee Info */}
                   <div className="mb-1">
-                    <p className="font-medium truncate">{schedule.user.name}</p>
+                    <p className="font-medium truncate">
+                      {" "}
+                      {getUserName(schedule)}
+                    </p>
                     <p className="text-[10px] opacity-75">
-                      {schedule.user.employeeId}
+                      {getUserEmployeeId(schedule)}
                     </p>
                   </div>
 
                   {/* Shift Info */}
                   <div className="flex items-center space-x-1 mb-1">
                     <Clock className="h-3 w-3" />
-                    <span className="font-medium">{schedule.shift.name}</span>
+                    <span className="font-medium">
+                      {getShiftName(schedule)}
+                    </span>
                   </div>
                   <p className="text-[10px] opacity-75">
                     {schedule.shift.startTime} - {schedule.shift.endTime}
@@ -99,12 +121,12 @@ export function ScheduleCalendar({
 
                   {/* Delete Button */}
                   <Button
-                    variant="ghost"
+                    variant="destructive"
                     size="icon"
-                    className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 h-6 w-6 group-hover:opacity-100 transition-opacity"
                     onClick={() => onDelete(schedule)}
                   >
-                    <Trash2 className="h-3 w-3 text-red-600" />
+                    <Trash2 className="h-3 w-3 text-red-100" />
                   </Button>
                 </div>
               ))

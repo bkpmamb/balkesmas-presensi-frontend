@@ -1,5 +1,7 @@
 // src/types/employee.ts
 
+import { Attendance } from "./attendance";
+
 export interface Category {
   _id: string;
   name: string;
@@ -105,4 +107,44 @@ export interface EmployeeDetailStats {
   value: string | number;
   description?: string;
   colorClass?: string;
+}
+
+export interface MonthlyStatistics {
+  totalAttendances: number;
+  onTimeAttendances: number;
+  lateAttendances: number;
+  workingDays: number;
+  attendanceRate: number;
+  averageWorkHours: number;
+  totalLateMinutes: number;
+}
+
+export interface Schedule {
+  _id: string;
+  user: string;
+  dayOfWeek: number;
+  isActive: boolean;
+  shift: Shift;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+export interface Shift {
+  _id: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface EmployeeDetailResponse {
+  success: boolean;
+  data: {
+    employee: Employee;
+    schedules: Schedule[];
+    statistics: {
+      thisMonth: MonthlyStatistics;
+    };
+    recentAttendances: Attendance[]; 
+  };
 }

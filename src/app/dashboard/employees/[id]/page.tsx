@@ -1,37 +1,39 @@
 // src/app/dashboard/employees/[id]/page.tsx
-
 "use client";
 
 import { use } from "react";
 import {
   EmployeeDetailHeader,
   EmployeeInfoCard,
-  EmployeeAttendanceStats,
   EmployeeRecentAttendances,
   EmployeeDetailSkeleton,
   EmployeeDetailDialogs,
   EmployeeNotFound,
 } from "@/components/detailEmployee";
 import { useEmployeeDetail } from "@/hooks/useEmployeeDetail";
+import { EmployeeScheduleCard } from "@/components/detailEmployee/EmployeeScheduleCard";
+import { EmployeeStatsCard } from "@/components/detailEmployee/EmployeeStatsCard";
 
 interface EmployeeDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default function EmployeeDetailPage({ params }: EmployeeDetailPageProps) {
+export default function EmployeeDetailPage({
+  params,
+}: EmployeeDetailPageProps) {
   const { id } = use(params);
-  
+
   const {
     employee,
+    schedules,
+    statistics,
+    recentAttendances,
     categories,
-    attendances,
-    attendanceSummary,
     editDialogOpen,
     setEditDialogOpen,
     deleteDialogOpen,
     setDeleteDialogOpen,
     isLoading,
-    isAttendancesLoading,
     isUpdating,
     isDeleting,
     error,
@@ -57,15 +59,19 @@ export default function EmployeeDetailPage({ params }: EmployeeDetailPageProps) 
         onDelete={() => setDeleteDialogOpen(true)}
       />
 
-      <EmployeeAttendanceStats summary={attendanceSummary} />
-
       <div className="grid gap-6 md:grid-cols-3">
-        <EmployeeInfoCard employee={employee} />
+        {/* Kolom kiri */}
+        <div className="space-y-6">
+          <EmployeeInfoCard employee={employee} />
+          <EmployeeScheduleCard schedules={schedules} />
+        </div>
 
-        <div className="md:col-span-2">
+        {/* Kolom kanan - 2 kolom */}
+        <div className="md:col-span-2 space-y-6">
+          <EmployeeStatsCard statistics={statistics} />
           <EmployeeRecentAttendances
-            attendances={attendances}
-            isLoading={isAttendancesLoading}
+            isLoading={isLoading}
+            attendances={recentAttendances}
           />
         </div>
       </div>

@@ -87,16 +87,24 @@ export function useSchedules() {
   // Computed values
   const employees = employeesData?.data ?? [];
   const totalEmployees = employees.length;
-  const uniqueEmployees = useMemo(
-    () => new Set(schedules.map((s) => s.user._id)).size,
-    [schedules]
-  );
+  const uniqueEmployees = useMemo(() => {
+    const validSchedules = schedules.filter((s) => {
+      if (!s.user) {
+        console.warn("⚠️ Schedule tanpa user:", s);
+        return false;
+      }
+      return true;
+    });
+
+    return new Set(validSchedules.map((s) => s.user._id)).size;
+  }, [schedules]);
 
   const schedulesByShift: ShiftByScheduleCount[] = useMemo(
     () =>
       shifts.map((shift) => ({
         shift,
-        count: schedules.filter((s) => s.shift._id === shift._id).length,
+        count: schedules.filter((s) => s.shift && s.shift._id === shift._id)
+          .length,
       })),
     [shifts, schedules]
   );

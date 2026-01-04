@@ -1,11 +1,9 @@
 // hooks/useEmployeeDetail.ts
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { employeesApi } from "@/src/lib/api/employees";
-import { attendancesApi } from "@/src/lib/api/attendances";
 import type { ApiError } from "@/lib/types/api";
 import type { UpdateEmployeeDto } from "@/lib/types/employee";
 import type { EmployeeFormValues } from "@/components/employees/EmployeeForm";
@@ -20,9 +18,9 @@ export function useEmployeeDetail({ employeeId }: UseEmployeeDetailProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  // Fetch employee detail
+  // Fetch employee detail dengan data lengkap
   const {
-    data: employee,
+    data: employeeDetail,
     isLoading: employeeLoading,
     error: employeeError,
   } = useQuery({
@@ -35,17 +33,6 @@ export function useEmployeeDetail({ employeeId }: UseEmployeeDetailProps) {
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: employeesApi.getCategories,
-  });
-
-  // Fetch employee attendances
-  const { data: attendancesData, isLoading: attendancesLoading } = useQuery({
-    queryKey: ["employee-attendances", employeeId],
-    queryFn: () =>
-      attendancesApi.getAll({
-        userId: employeeId,
-        limit: 10,
-      }),
-    enabled: !!employeeId,
   });
 
   // Update mutation
@@ -91,10 +78,13 @@ export function useEmployeeDetail({ employeeId }: UseEmployeeDetailProps) {
 
   return {
     // Data
-    employee,
+    employee: employeeDetail?.employee,
+    schedules: employeeDetail?.schedules || [],
+    statistics: employeeDetail?.statistics.thisMonth,
+    recentAttendances: employeeDetail?.recentAttendances || [],
+
+    // Categories for edit form
     categories,
-    attendances: attendancesData?.data ?? [],
-    attendanceSummary: attendancesData?.summary,
 
     // State
     editDialogOpen,
@@ -104,7 +94,6 @@ export function useEmployeeDetail({ employeeId }: UseEmployeeDetailProps) {
 
     // Loading states
     isLoading: employeeLoading,
-    isAttendancesLoading: attendancesLoading,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
 

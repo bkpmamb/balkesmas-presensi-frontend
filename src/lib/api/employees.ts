@@ -8,6 +8,7 @@ import type {
   EmployeesResponse,
   EmployeeResponse,
   Category,
+  EmployeeDetailResponse,
 } from "@/lib/types/employee";
 
 export const employeesApi = {
@@ -35,8 +36,8 @@ export const employeesApi = {
   },
 
   // Get employee by ID
-  getById: async (id: string): Promise<Employee> => {
-    const { data } = await apiClient.get<EmployeeResponse>(
+  getById: async (id: string): Promise<EmployeeDetailResponse["data"]> => {
+    const { data } = await apiClient.get<EmployeeDetailResponse>(
       `/admin/employees/${id}`
     );
     return data.data;
@@ -52,7 +53,10 @@ export const employeesApi = {
   },
 
   // Update employee
-  update: async (id: string, employee: UpdateEmployeeDto): Promise<Employee> => {
+  update: async (
+    id: string,
+    employee: UpdateEmployeeDto
+  ): Promise<Employee> => {
     const { data } = await apiClient.put<EmployeeResponse>(
       `/admin/employees/${id}`,
       employee
@@ -67,9 +71,10 @@ export const employeesApi = {
 
   // Get categories
   getCategories: async (): Promise<Category[]> => {
-    const { data } = await apiClient.get<{ success: boolean; data: Category[] }>(
-      "/admin/categories/list"
-    );
+    const { data } = await apiClient.get<{
+      success: boolean;
+      data: Category[];
+    }>("/admin/categories/list");
     return data.data;
   },
 };

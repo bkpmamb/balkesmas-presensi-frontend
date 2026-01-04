@@ -82,7 +82,7 @@ export function SchedulesDialogs({
             <AlertDialogDescription>
               Apakah Anda yakin ingin menghapus jadwal{" "}
               <span className="font-semibold text-foreground">
-                {selectedSchedule?.user.name}
+                {selectedSchedule?.user?.name ?? "User Tidak Ditemukan"}
               </span>{" "}
               pada hari{" "}
               <span className="font-semibold text-foreground">
