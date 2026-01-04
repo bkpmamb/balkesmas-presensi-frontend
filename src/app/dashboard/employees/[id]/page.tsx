@@ -1,7 +1,5 @@
 // src/app/dashboard/employees/[id]/page.tsx
 "use client";
-
-import { use } from "react";
 import {
   EmployeeDetailHeader,
   EmployeeInfoCard,
@@ -13,6 +11,7 @@ import {
 import { useEmployeeDetail } from "@/hooks/useEmployeeDetail";
 import { EmployeeScheduleCard } from "@/components/detailEmployee/EmployeeScheduleCard";
 import { EmployeeStatsCard } from "@/components/detailEmployee/EmployeeStatsCard";
+import { use } from "react";
 
 interface EmployeeDetailPageProps {
   params: Promise<{ id: string }>;
@@ -49,6 +48,8 @@ export default function EmployeeDetailPage({
   if (error || !employee) {
     return <EmployeeNotFound />;
   }
+
+  console.log("Employee ID:", id);
 
   return (
     <div className="space-y-6">

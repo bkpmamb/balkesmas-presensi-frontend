@@ -1,6 +1,7 @@
 // hooks/useEmployees.ts
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { employeesApi } from "@/src/lib/api/employees";
@@ -28,6 +29,7 @@ const initialFilters: EmployeeFilters = {
 };
 
 export function useEmployees() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<EmployeeFilters>(initialFilters);
@@ -168,7 +170,7 @@ export function useEmployees() {
 
   // Navigation handler
   const handleViewDetail = (employee: Employee) => {
-    window.location.href = `/dashboard/employees/${employee._id}`;
+    router.push(`/dashboard/employees/${employee._id}`);
   };
 
   return {
