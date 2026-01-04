@@ -1,16 +1,24 @@
 // src/app/layout.tsx
 
-import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { Providers } from "./providers";
+import { Metadata } from "next";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Balkesmas Presensi - Admin Panel",
-  description: "Sistem presensi karyawan Balkesmas",
+  title: "Balkesmas Presensi",
+  description: "Sistem Presensi Internal",
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
 };
 
 export default function RootLayout({

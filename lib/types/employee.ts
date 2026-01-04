@@ -1,5 +1,4 @@
 // src/types/employee.ts
-import type { LucideIcon } from "lucide-react";
 
 export interface Category {
   _id: string;
@@ -90,4 +89,20 @@ export interface EmployeeStatCard {
   id: string;
   title: string;
   count: number;
+}
+
+export interface EmployeeAttendanceSummary {
+  totalAttendances: number;
+  totalOnTime: number;
+  totalLate: number;
+  totalLateMinutes: number;
+  averageWorkHours: number;
+  attendanceRate: number;
+}
+
+export interface EmployeeDetailStats {
+  title: string;
+  value: string | number;
+  description?: string;
+  colorClass?: string;
 }

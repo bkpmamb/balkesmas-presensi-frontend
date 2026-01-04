@@ -74,12 +74,6 @@ export function ScheduleForm({
     });
   }, [shifts, selectedEmployeeData]);
 
-  // Reset shift when employee changes
-  const handleEmployeeChange = (value: string) => {
-    setSelectedEmployee(value);
-    setSelectedShift("none"); // Reset shift selection
-  };
-
   const handleDayToggle = (day: number) => {
     setSelectedDays((prev) =>
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]

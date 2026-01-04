@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Image, Trash2 } from "lucide-react";
+import { MoreHorizontal, Eye, Image as ImageIcon, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -193,7 +193,7 @@ export function AttendanceTable({
                             window.open(attendance.photoUrl, "_blank")
                           }
                         >
-                          <Image className="mr-2 h-4 w-4" />
+                          <ImageIcon className="mr-2 h-4 w-4" />
                           Lihat Foto Masuk
                         </DropdownMenuItem>
                       )}
@@ -203,7 +203,7 @@ export function AttendanceTable({
                             window.open(attendance.photoOutUrl, "_blank")
                           }
                         >
-                          <Image className="mr-2 h-4 w-4" />
+                          <ImageIcon className="mr-2 h-4 w-4" />
                           Lihat Foto Pulang
                         </DropdownMenuItem>
                       )}

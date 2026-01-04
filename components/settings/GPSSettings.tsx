@@ -25,21 +25,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { MapPin, Navigation, Loader2 } from "lucide-react";
-import type { Settings } from "@/lib/types/settings";
+import type { GPSFormValues, Settings } from "@/lib/types/settings";
 
 const gpsSchema = z.object({
-  latitude: z.coerce
-    .number()
-    .min(-90, "Latitude min -90")
-    .max(90, "Latitude max 90"),
-  longitude: z.coerce
-    .number()
-    .min(-180, "Longitude min -180")
-    .max(180, "Longitude max 180"),
-  maxDistance: z.coerce.number().min(1, "Radius minimal 1 meter"),
+  latitude: z.coerce.number().min(-90).max(90),
+  longitude: z.coerce.number().min(-180).max(180),
+  maxDistance: z.coerce.number().min(1),
 });
-
-type GPSFormValues = z.infer<typeof gpsSchema>;
 
 interface GPSSettingsProps {
   settings: Settings;
@@ -112,6 +104,7 @@ export function GPSSettings({
                         type="number"
                         step="any"
                         {...field}
+                        onChange={(e) => field.onChange(e.target.value)}
                         placeholder="-6.9175"
                       />
                     </FormControl>
@@ -132,6 +125,7 @@ export function GPSSettings({
                         step="any"
                         placeholder="107.6191"
                         {...field}
+                        onChange={(e) => field.onChange(e.target.value)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -147,7 +141,13 @@ export function GPSSettings({
                 <FormItem>
                   <FormLabel>Radius Maksimal (meter)</FormLabel>
                   <FormControl>
-                    <Input type="number" min="1" placeholder="100" {...field} />
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="100"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
                   </FormControl>
                   <FormDescription>
                     Jarak maksimal dari kantor untuk bisa melakukan presensi
@@ -187,7 +187,7 @@ export function GPSSettings({
             height="300"
             style={{ border: 0 }}
             loading="lazy"
-            src={`https://www.google.com/maps?q=${form.watch(
+            src={`https://maps.google.com/maps?q=${form.watch(
               "latitude"
             )},${form.watch("longitude")}&z=15&output=embed`}
           ></iframe>
