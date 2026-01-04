@@ -49,8 +49,6 @@ export default function EmployeeDetailPage({
     return <EmployeeNotFound />;
   }
 
-  // just added a web hook
-
   return (
     <div className="space-y-6">
       <EmployeeDetailHeader
