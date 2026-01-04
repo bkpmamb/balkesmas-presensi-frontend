@@ -47,7 +47,7 @@ export function EditEmployeeDialog({
       name: employee.name,
       username: employee.username,
       employeeId: employee.employeeId,
-      category: employee.category,
+      category: employee.category._id,
       password: "", // Kosongkan password secara default
     },
   });
@@ -59,7 +59,7 @@ export function EditEmployeeDialog({
         name: employee.name,
         username: employee.username,
         employeeId: employee.employeeId,
-        category: employee.category,
+        category: employee.category._id,
         password: "",
       });
     }
