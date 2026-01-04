@@ -9,8 +9,8 @@ import { Metadata } from "next";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Balkesmas Presensi",
-  description: "Sistem Presensi Internal",
+  title: "PT. Arya Surya Perkasa",
+  description: "Dashboard Presensi Internal PT. Arya Surya Perkasa",
   robots: {
     index: false,
     follow: false,
