@@ -2,7 +2,6 @@
 
 "use client";
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -25,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import type { Category, Shift } from "@/lib/types/shift";
+import { useForm } from "react-hook-form";
 
 const shiftSchema = z.object({
   name: z.string().min(3, "Nama shift minimal 3 karakter"),
@@ -49,14 +49,14 @@ export function ShiftForm({
   onSubmit,
   isLoading,
 }: ShiftFormProps) {
-  const form = useForm<ShiftFormValues>({
+  const form = useForm({
     resolver: zodResolver(shiftSchema),
     defaultValues: {
-      name: shift?.name || "",
-      category: shift?.category._id || "",
-      startTime: shift?.startTime || "",
-      endTime: shift?.endTime || "",
-      toleranceMinutes: shift?.toleranceMinutes || 15,
+      name: shift?.name ?? "",
+      category: shift?.category?._id ?? "",
+      startTime: shift?.startTime ?? "",
+      endTime: shift?.endTime ?? "",
+      toleranceMinutes: shift?.toleranceMinutes ?? 15,
     },
   });
 
@@ -144,7 +144,12 @@ export function ShiftForm({
             <FormItem>
               <FormLabel>Toleransi Keterlambatan (menit)</FormLabel>
               <FormControl>
-                <Input type="number" min="0" {...field} />
+                <Input
+                  type="number"
+                  min="0"
+                  {...field}
+                  value={field.value !== undefined ? String(field.value) : ""}
+                />
               </FormControl>
               <FormDescription>
                 Karyawan masih dianggap tepat waktu dalam toleransi ini
