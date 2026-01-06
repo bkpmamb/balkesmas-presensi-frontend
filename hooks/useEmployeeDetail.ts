@@ -76,11 +76,29 @@ export function useEmployeeDetail({ employeeId }: UseEmployeeDetailProps) {
     router.push("/dashboard/employees");
   };
 
+  const stats = employeeDetail?.statistics.thisMonth;
+
+  const totalLateFromList =
+    employeeDetail?.recentAttendances?.reduce(
+      (acc, curr) => acc + (curr.lateMinutes || 0),
+      0
+    ) || 0;
+
   return {
     // Data
     employee: employeeDetail?.employee,
     schedules: employeeDetail?.schedules || [],
-    statistics: employeeDetail?.statistics.thisMonth,
+    statistics: stats
+      ? {
+          ...stats,
+          // Jika API kirim 0, gunakan hasil hitung manual dari list
+          totalLateMinutes:
+            stats.totalLateMinutes > 0
+              ? stats.totalLateMinutes
+              : totalLateFromList,
+        }
+      : undefined,
+
     recentAttendances: employeeDetail?.recentAttendances || [],
 
     // Categories for edit form

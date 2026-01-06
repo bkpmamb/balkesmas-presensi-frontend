@@ -45,7 +45,7 @@ export function EmployeeStatsCard({ statistics }: EmployeeStatsCardProps) {
       <CardContent>
         <div className="space-y-4">
           {/* Attendance Rate */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -64,7 +64,7 @@ export function EmployeeStatsCard({ statistics }: EmployeeStatsCardProps) {
                 {statistics.lateAttendances} terlambat
               </span>
             </div>
-          </div>
+          </div> */}
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4 pt-2">
@@ -83,8 +83,11 @@ export function EmployeeStatsCard({ statistics }: EmployeeStatsCardProps) {
                 <AlertTriangle className="h-4 w-4 text-amber-600" />
                 <span className="text-sm font-medium">Menit Terlambat</span>
               </div>
-              <p className="text-2xl font-bold">
-                {statistics.totalLateMinutes}
+              <p className="text-2xl font-bold truncate">
+                {statistics.totalLateMinutes}{" "}
+                <span className="text-sm font-normal text-muted-foreground">
+                  menit
+                </span>
               </p>
             </div>
 

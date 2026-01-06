@@ -7,6 +7,13 @@ import type {
   TodayAttendance,
   ClockInResponse,
   ClockOutResponse,
+  EmployeeStatistics,
+  ChangePasswordDto,
+  GenericResponse,
+  AttendanceSummary,
+  PaginationData,
+  AttendanceHistoryResponse,
+  WorkSchedule,
 } from "@/lib/types/employee-attendance";
 
 export const employeeAttendanceApi = {
@@ -28,6 +35,14 @@ export const employeeAttendanceApi = {
     return data.data;
   },
 
+  getAllSchedules: async (): Promise<WorkSchedule[]> => {
+    const { data } = await apiClient.get<{
+      success: boolean;
+      data: WorkSchedule[];
+    }>("/employee/schedules");
+    return data.data;
+  },
+
   // Get today's attendance
   getTodayAttendance: async (): Promise<TodayAttendance | null> => {
     // Tambahkan timestamp agar Vercel tidak memberikan data cache
@@ -40,7 +55,6 @@ export const employeeAttendanceApi = {
     return data.data;
   },
 
-  // Clock in
   clockIn: async (formData: FormData): Promise<ClockInResponse> => {
     const { data } = await apiClient.post<ClockInResponse>(
       "/employee/attendance/clock-in",
@@ -54,7 +68,6 @@ export const employeeAttendanceApi = {
     return data;
   },
 
-  // Clock out
   clockOut: async (formData: FormData): Promise<ClockOutResponse> => {
     const { data } = await apiClient.post<ClockOutResponse>(
       "/employee/attendance/clock-out",
@@ -64,6 +77,39 @@ export const employeeAttendanceApi = {
           "Content-Type": "multipart/form-data",
         },
       }
+    );
+    return data;
+  },
+
+  getStatistics: async (): Promise<EmployeeStatistics> => {
+    const { data } = await apiClient.get<{
+      success: boolean;
+      data: EmployeeStatistics;
+    }>("/employee/statistics");
+    return data.data;
+  },
+
+  getAttendanceHistory: async (params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<AttendanceHistoryResponse> => {
+    const query = new URLSearchParams();
+    if (params?.page) query.append("page", params.page.toString());
+    if (params?.limit) query.append("limit", params.limit.toString());
+
+    const { data } = await apiClient.get<AttendanceHistoryResponse>(
+      `/employee/attendance/history?${query.toString()}`
+    );
+
+    return data;
+  },
+
+  changePassword: async (
+    passwords: ChangePasswordDto
+  ): Promise<GenericResponse> => {
+    const { data } = await apiClient.put<{ success: boolean; message: string }>(
+      "/employee/profile/change-password",
+      passwords
     );
     return data;
   },

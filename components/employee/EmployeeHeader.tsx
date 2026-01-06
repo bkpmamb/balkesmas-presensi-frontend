@@ -13,9 +13,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, ChevronDown } from "lucide-react";
+import { LogOut, User, ChevronDown, History } from "lucide-react";
 import { attendanceAnimations } from "@/config/employee.config";
 import type { EmployeeProfile } from "@/lib/types/employee-attendance";
+import Link from "next/link";
 
 interface EmployeeHeaderProps {
   profile: EmployeeProfile | undefined;
@@ -72,7 +73,30 @@ export function EmployeeHeader({ profile, onLogout }: EmployeeHeaderProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />
-              Profil Saya
+              <Link
+                href="/employee/profile"
+                className="flex items-center w-full cursor-pointer"
+              >
+                Profil & Statistik
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <History className="mr-2 h-4 w-4" />
+              <Link
+                href="/employee/history"
+                className="flex items-center w-full cursor-pointer"
+              >
+                Riwayat Presensi
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <History className="mr-2 h-4 w-4" />
+              <Link
+                href="/employee/profile/change-password"
+                className="flex items-center w-full cursor-pointer"
+              >
+                Ganti Password
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onLogout} className="text-red-600">

@@ -104,4 +104,72 @@ export interface CameraState {
   error: string | null;
 }
 
+export interface EmployeeStatistics {
+  thisMonth: {
+    totalAttendances: number;
+    onTimeAttendances: number;
+    lateAttendances: number;
+    totalLateMinutes: number;
+    attendanceRate: number;
+  };
+}
+
+export interface ChangePasswordDto {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export interface GenericResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface ApiError {
+  response?: {
+    data?: {
+      success?: boolean;
+      message?: string;
+    };
+  };
+}
+
+export interface AttendanceSummary {
+  totalAttendances: number;
+  totalOnTime: number;
+  totalLate: number;
+  totalLateMinutes: number;
+  totalWorkMinutes: number;
+  attendanceRate?: number; // Opsional jika backend mengirimkannya
+}
+
+export interface PaginationData {
+  totalData: number;
+  totalPages: number;
+  currentPage: number;
+  limit: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
+export interface AttendanceHistoryResponse {
+  success: boolean;
+  message: string;
+  data: TodayAttendance[]; // Kita gunakan interface TodayAttendance yang sudah ada
+  summary: AttendanceSummary;
+  pagination: PaginationData;
+}
+
+export interface WorkSchedule {
+  _id: string;
+  user: string;
+  dayOfWeek: number; // 0-6
+  shift: {
+    _id: string;
+    name: string;
+    startTime: string;
+    endTime: string;
+  };
+  isActive: boolean;
+}
+
 export type AttendanceAction = "clock-in" | "clock-out" | null;
