@@ -9,9 +9,9 @@ console.log("🌐 API URL:", API_URL);
 
 export const apiClient = axios.create({
   baseURL: `${API_URL}/api`,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // headers: {
+  //   "Content-Type": "application/json",
+  // },
   timeout: 10000,
 });
 
