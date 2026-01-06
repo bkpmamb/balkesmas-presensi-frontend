@@ -13,7 +13,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   initialize: () => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
+      const token =
+        sessionStorage.getItem("token") || localStorage.getItem("token");
       const userStr = localStorage.getItem("user");
 
       let user = null;
@@ -27,9 +28,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
 
       if (token && user) {
-        console.log("🔄 Initializing auth from localStorage");
-        console.log("🔑 Token present:", !!token);
-        console.log("👤 User:", user.name);
+        console.log(`🔄 Initializing ${user.role} auth`);
         set({ token, user, isAuthenticated: true });
       }
     }
@@ -51,40 +50,44 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       const token = response.token;
 
-      console.log("👤 User object created:", user);
-      console.log("🔑 Token received:", token.substring(0, 20) + "...");
-
-      // ✅ Save to localStorage
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      console.log("💾 Saved to localStorage");
-      console.log(
-        "💾 Token in localStorage:",
-        localStorage.getItem("token")?.substring(0, 20) + "..."
-      );
-
       // ✅ Update store
       set({
         token: token,
         user: user,
         isAuthenticated: true,
       });
+      // ✅ STRATEGI PENYIMPANAN BERDASARKAN ROLE
+      if (user.role === "admin") {
+        sessionStorage.setItem("token", token);
+        localStorage.removeItem("token"); // Bersihkan jika ada bekas employee
+        console.log("🛡️ Admin detected: Saving token to sessionStorage");
+      } else {
+        localStorage.setItem("token", token);
+        sessionStorage.removeItem("token"); // Bersihkan jika ada bekas admin
+        console.log("🏠 Employee detected: Saving token to localStorage");
+      }
 
-      console.log("✅ Store updated successfully");
+      // Simpan data profil tetap di localStorage agar UI tidak kosong saat refresh
+      localStorage.setItem("user", JSON.stringify(user));
 
+      set({ token, user, isAuthenticated: true });
       toast.success("Login berhasil!");
     } catch (error) {
       const apiError = error as ApiError;
-      console.error("❌ Login error in store:", apiError);
       toast.error(apiError.message || "Login gagal");
       throw error;
     }
   },
 
   logout: () => {
-    console.log("🚪 Logging out...");
+    console.log("🚪 Logging out from all storages...");
     authApi.logout();
+
+    // Bersihkan semua kemungkinan tempat penyimpanan
+    sessionStorage.removeItem("token");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
     set({ token: null, user: null, isAuthenticated: false });
     toast.success("Logout berhasil");
   },

@@ -15,8 +15,17 @@ export const apiClient = axios.create({
   timeout: 10000,
 });
 
+const clearAuthAndRedirect = (reason?: string) => {
+  if (typeof window !== "undefined") {
+    sessionStorage.removeItem("token");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = reason ? `/login?reason=${reason}` : "/login";
+  }
+};
+
 let logoutTimer: NodeJS.Timeout | null = null;
-const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
+const INACTIVITY_TIMEOUT = 5 * 60 * 1000;
 
 function resetLogoutTimer() {
   if (logoutTimer) clearTimeout(logoutTimer);
@@ -43,49 +52,30 @@ if (typeof window !== "undefined") {
 apiClient.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
+      // Cek SessionStorage dulu (Admin), jika tidak ada cek LocalStorage (Employee)
+      const token =
+        sessionStorage.getItem("token") || localStorage.getItem("token");
+
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
-      console.log("🔑 Token:", token ? "Present" : "Missing");
     }
-
-    console.log(
-      "📤 API Request:",
-      config.method?.toUpperCase(),
-      config.url,
-      "Auth:",
-      config.headers.Authorization ? "YES" : "NO"
-    );
-
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response interceptor
+// ✅ Response interceptor
 apiClient.interceptors.response.use(
-  (response) => {
-    console.log("📥 API Response:", response.config.url, response.status);
-    return response;
-  },
+  (response) => response,
   (error: AxiosError<ApiErrorResponse>) => {
-    console.error("📥 Response Error:", error.response?.status, error.message);
-
-    // Handle 401 - Unauthorized
     if (error.response?.status === 401) {
-      console.log("🔐 Unauthorized - Clearing auth");
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
+      console.log("🔐 Unauthorized - Clearing all storages");
+      clearAuthAndRedirect();
     }
 
-    // ✅ Type-safe error extraction
     const message =
       error.response?.data?.message || error.message || "An error occurred";
-
-    console.error("❌ Error message:", message);
-
     return Promise.reject({
       message,
       status: error.response?.status,
