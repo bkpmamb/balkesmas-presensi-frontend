@@ -45,14 +45,14 @@ export default function DashboardPage() {
       <StatsCardsGrid
         cards={mainStatsCards}
         stats={stats}
-        gridClassName="md:grid-cols-2 lg:grid-cols-4"
+        gridClassName="grid-cols-2 lg:grid-cols-4"
       />
 
       {/* Monthly Stats Cards */}
       <StatsCardsGrid
         cards={monthlyStatsCards}
         stats={stats}
-        gridClassName="md:grid-cols-3"
+        gridClassName="grid-cols-2 md:grid-cols-3"
       />
 
       {/* Chart and Recent Attendances */}

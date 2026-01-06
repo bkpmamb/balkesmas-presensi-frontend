@@ -12,7 +12,7 @@ interface StatsCardsGridProps {
 export function StatsCardsGrid({
   cards,
   stats,
-  gridClassName = "md:grid-cols-2 lg:grid-cols-4",
+  gridClassName = "grid-cols-2 lg:grid-cols-4",
 }: StatsCardsGridProps) {
   return (
     <div className={`grid gap-4 ${gridClassName}`}>

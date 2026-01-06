@@ -13,6 +13,7 @@ import {
   ClipboardList,
   Settings,
   LogOut,
+  // X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -52,7 +53,11 @@ const navigation = [
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { logout, user } = useAuthStore();

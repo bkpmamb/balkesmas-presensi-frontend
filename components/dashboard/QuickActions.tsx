@@ -12,7 +12,7 @@ export function QuickActions({ actions }: QuickActionsProps) {
   return (
     <div className="rounded-lg border bg-card p-6">
       <h3 className="mb-4 text-lg font-semibold">Aksi Cepat</h3>
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         {actions.map((action) => (
           <Button
             key={`${action.href}-${action.label}`}
