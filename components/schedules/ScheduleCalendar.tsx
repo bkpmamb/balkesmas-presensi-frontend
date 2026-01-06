@@ -69,64 +69,76 @@ export function ScheduleCalendar({
   }));
 
   return (
-    <div className="grid grid-cols-7 gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-7 lg:gap-2 xl:gap-4">
       {schedulesByDay.map((day) => (
         <Card
           key={day.value}
-          className={cn("p-4", day.value === 0 && "bg-red-50 border-red-200")}
+          className={cn(
+            "flex flex-col h-full transition-all",
+            day.value === 0 && "bg-red-50/50 border-red-100"
+          )}
         >
-          {/* Day Header */}
-          <div className="mb-3 pb-2 border-b">
-            <h3 className="font-semibold text-sm">{day.label}</h3>
-            <p className="text-xs text-muted-foreground">
-              {day.schedules.length} jadwal
-            </p>
+          {/* Day Header - Sticky di mobile agar saat scroll jadwal panjang tetap tahu ini hari apa */}
+          <div className="p-3 border-b bg-inherit rounded-t-lg sticky top-0 z-10 lg:static">
+            <div className="flex justify-between items-center lg:flex-col lg:items-start">
+              <h3 className="font-bold text-sm text-gray-900">{day.label}</h3>
+              <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                {day.schedules.length} Jadwal
+              </span>
+            </div>
           </div>
 
           {/* Schedules List */}
-          <div className="space-y-2">
+          <div className="flex-1 p-3 space-y-3 lg:space-y-2">
             {day.schedules.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-4">
-                Belum ada jadwal
-              </p>
+              <div className="flex flex-col items-center justify-center py-6 lg:py-10 opacity-40">
+                <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center mb-1">
+                  <Clock className="h-4 w-4 text-gray-400" />
+                </div>
+                <p className="text-[10px] text-muted-foreground">Kosong</p>
+              </div>
             ) : (
               day.schedules.map((schedule) => (
                 <div
                   key={schedule._id}
-                  className={`${getShiftColor(
-                    getShiftName(schedule)
-                  )} relative group border rounded-lg p-2 space-y-1`}
+                  className={cn(
+                    getShiftColor(getShiftName(schedule)),
+                    "relative group border rounded-xl p-3 lg:p-2 shadow-xs transition-all hover:shadow-md"
+                  )}
                 >
                   {/* Employee Info */}
-                  <div className="mb-1">
-                    <p className="font-medium truncate">
-                      {" "}
+                  <div className="pr-6">
+                    <p className="font-bold text-xs lg:text-[11px] truncate text-gray-800">
                       {getUserName(schedule)}
                     </p>
-                    <p className="text-[10px] opacity-75">
-                      {getUserEmployeeId(schedule)}
+                    <p className="text-[10px] text-gray-500 font-mono">
+                      #{getUserEmployeeId(schedule)}
                     </p>
                   </div>
 
                   {/* Shift Info */}
-                  <div className="flex items-center space-x-1 mb-1">
-                    <Clock className="h-3 w-3" />
-                    <span className="font-medium">
-                      {getShiftName(schedule)}
-                    </span>
+                  <div className="mt-2 pt-2 border-t border-black/5">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-4 w-4 rounded-full bg-white/50 flex items-center justify-center">
+                        <Clock className="h-2.5 w-2.5" />
+                      </div>
+                      <span className="font-semibold text-[10px] uppercase tracking-wider">
+                        {getShiftName(schedule)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[10px] font-medium opacity-80">
+                      {schedule.shift.startTime} - {schedule.shift.endTime}
+                    </p>
                   </div>
-                  <p className="text-[10px] opacity-75">
-                    {schedule.shift.startTime} - {schedule.shift.endTime}
-                  </p>
 
-                  {/* Delete Button */}
+                  {/* Delete Button - Dibuat lebih besar di mobile (Touch Friendly) */}
                   <Button
                     variant="destructive"
                     size="icon"
-                    className="absolute top-1 right-1 h-6 w-6 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-2 right-2 h-7 w-7 lg:h-6 lg:w-6 lg:opacity-0 group-hover:opacity-100 transition-all rounded-full shadow-lg lg:shadow-none"
                     onClick={() => onDelete(schedule)}
                   >
-                    <Trash2 className="h-3 w-3 text-red-100" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               ))
