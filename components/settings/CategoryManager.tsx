@@ -129,20 +129,26 @@ export function CategoryManager({
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center space-x-2">
-              <Folder className="h-5 w-5" />
+      <CardHeader className="pb-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Kontainer Teks (Judul & Deskripsi) */}
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
+              <Folder className="h-5 w-5 text-blue-600" />
               <span>Kategori Karyawan</span>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Kelola kategori untuk pengelompokan karyawan
             </CardDescription>
           </div>
-          <Button onClick={() => setCreateDialogOpen(true)}>
+
+          {/* Tombol Aksi */}
+          <Button
+            onClick={() => setCreateDialogOpen(true)}
+            className="w-full sm:w-auto shadow-sm transition-all active:scale-95"
+          >
             <Plus className="mr-2 h-4 w-4" />
-            Tambah Kategori
+            <span>Tambah Kategori</span>
           </Button>
         </div>
       </CardHeader>

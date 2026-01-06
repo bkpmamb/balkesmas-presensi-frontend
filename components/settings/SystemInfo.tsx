@@ -1,11 +1,6 @@
 // components/settings/SystemInfo.tsx
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Info } from "lucide-react";
 import type { SystemInfoItem } from "@/lib/types/settings";
 
@@ -14,7 +9,7 @@ interface SystemInfoProps {
 }
 
 export function SystemInfo({ categoriesCount }: SystemInfoProps) {
-  const infoItems: SystemInfoItem[] = [
+  const infoItems = [
     {
       label: "Nama Aplikasi",
       value: process.env.NEXT_PUBLIC_APP_NAME || "Balkesmas Presensi",
@@ -35,26 +30,35 @@ export function SystemInfo({ categoriesCount }: SystemInfoProps) {
   ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Info className="h-5 w-5" />
+    <Card className="shadow-sm">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center space-x-2 text-base md:text-lg">
+          <Info className="h-5 w-5 text-blue-500" />
           <span>Informasi Sistem</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* - 1 Kolom di HP (Mobile sangat kecil)
+            - 2 Kolom di Tablet kecil (sm)
+            - 4 Kolom di Desktop (lg) 
+        */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {infoItems.map((item) => (
-            <div key={item.label}>
-              <p className="text-sm font-medium text-muted-foreground">
+            <div key={item.label} className="space-y-1 min-w-0">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 {item.label}
               </p>
+
               {item.isMono ? (
-                <p className="text-sm font-mono bg-gray-100 px-2 py-1 rounded truncate">
+                <div className="group relative">
+                  <p className="text-xs font-mono bg-slate-50 border border-slate-200 px-2 py-1.5 rounded text-slate-600 truncate hover:whitespace-normal hover:break-all transition-all">
+                    {item.value}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-base md:text-lg font-semibold text-slate-900">
                   {item.value}
                 </p>
-              ) : (
-                <p className="text-lg font-semibold">{item.value}</p>
               )}
             </div>
           ))}

@@ -10,7 +10,7 @@ interface AttendancesStatsCardsProps {
 
 export function AttendancesStatsCards({ summary }: AttendancesStatsCardsProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-4">
+    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
       {attendanceStatsCards.map((card) => (
         <Card key={card.title}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

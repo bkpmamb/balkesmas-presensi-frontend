@@ -8,7 +8,7 @@ interface EmployeesStatsCardsProps {
 
 export function EmployeesStatsCards({ stats }: EmployeesStatsCardsProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-4">
+    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
       {stats.map((stat) => (
         <div key={stat.id} className="rounded-lg border bg-card p-4">
           <p className="text-sm font-medium text-muted-foreground">
