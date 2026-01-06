@@ -154,3 +154,9 @@ export interface QuickAction {
   icon: LucideIcon;
   label: string;
 }
+
+export interface SkeletonConfig {
+  count: number;
+  className: string;
+  gridClass: string;
+}
