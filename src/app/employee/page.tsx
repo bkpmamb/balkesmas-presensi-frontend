@@ -2,32 +2,84 @@
 
 "use client";
 
-import { useAuthStore } from "@/src/lib/store/authStore";
+import { motion } from "framer-motion";
+import {
+  EmployeeHeader,
+  EmployeeGreeting,
+  ScheduleCard,
+  AttendanceStatus,
+  AttendanceActions,
+  AttendanceCamera,
+  EmployeeSkeleton,
+} from "@/components/employee";
+import { useEmployeeAttendance } from "@/hooks/useEmployeeAttendance";
+import { attendanceAnimations } from "@/config/employee.config";
 
-export default function EmployeeDashboardPage() {
-  const { user } = useAuthStore();
+export default function EmployeePage() {
+  const {
+    profile,
+    todaySchedule,
+    todayAttendance,
+    currentAction,
+    geolocation,
+    camera,
+    videoRef,
+    isLoading,
+    isSubmitting,
+    canClockIn,
+    canClockOut,
+    isReadyToSubmit,
+    startAttendance,
+    submitAttendance,
+    capturePhoto,
+    retakePhoto,
+    resetState,
+    getCurrentLocation,
+    handleLogout,
+  } = useEmployeeAttendance();
+
+  if (isLoading) {
+    return <EmployeeSkeleton />;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-4">
-          Selamat datang, {user?.name}! 👋
-        </h1>
-        <div className="bg-white rounded-lg border p-6">
-          <p className="text-muted-foreground">
-            Employee dashboard sedang dalam pengembangan.
-          </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Fitur yang akan tersedia:
-          </p>
-          <ul className="list-disc list-inside mt-2 space-y-1 text-sm text-muted-foreground">
-            <li>Clock In/Out</li>
-            <li>Attendance History</li>
-            <li>Monthly Summary</li>
-            <li>Profile Settings</li>
-          </ul>
-        </div>
-      </div>
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100">
+      <motion.div
+        variants={attendanceAnimations.container}
+        initial="hidden"
+        animate="visible"
+      >
+        <EmployeeHeader profile={profile} onLogout={handleLogout} />
+
+        <main className="container mx-auto px-4 py-6 space-y-6 max-w-lg">
+          <EmployeeGreeting name={profile?.name} />
+
+          <ScheduleCard schedule={todaySchedule} />
+
+          <AttendanceStatus attendance={todayAttendance} />
+
+          <AttendanceActions
+            canClockIn={!!canClockIn}
+            canClockOut={!!canClockOut}
+            hasSchedule={!!todaySchedule}
+            onStartAttendance={startAttendance}
+          />
+        </main>
+
+        <AttendanceCamera
+          action={currentAction}
+          geolocation={geolocation}
+          camera={camera}
+          videoRef={videoRef}
+          isSubmitting={isSubmitting}
+          isReadyToSubmit={isReadyToSubmit}
+          onCapture={capturePhoto}
+          onRetake={retakePhoto}
+          onSubmit={submitAttendance}
+          onCancel={resetState}
+          onRefreshLocation={getCurrentLocation}
+        />
+      </motion.div>
     </div>
   );
 }

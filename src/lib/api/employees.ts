@@ -77,4 +77,11 @@ export const employeesApi = {
     }>("/admin/categories/list");
     return data.data;
   },
+
+  // Reset Password
+  resetPassword: async (id: string, newPassword: string): Promise<void> => {
+    await apiClient.put(`/admin/employees/${id}/reset-password`, {
+      newPassword,
+    });
+  },
 };

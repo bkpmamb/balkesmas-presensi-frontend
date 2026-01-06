@@ -157,10 +157,26 @@ export function useEmployees() {
 
   const handleEdit = async (formData: EmployeeFormValues) => {
     if (!selectedEmployee) return;
+
+    // Pisahkan password dari data
+    const { password, ...updateData } = formData;
+
+    // Update profile dulu
     await updateMutation.mutateAsync({
       id: selectedEmployee._id,
-      data: formData,
+      data: updateData,
     });
+
+    // Reset password jika diisi
+    if (password && password.length >= 6) {
+      try {
+        await employeesApi.resetPassword(selectedEmployee._id, password);
+        toast.success("Password berhasil direset!");
+      } catch (error) {
+        const apiError = error as ApiError;
+        toast.error(apiError.message || "Gagal mereset password");
+      }
+    }
   };
 
   const handleDelete = async () => {

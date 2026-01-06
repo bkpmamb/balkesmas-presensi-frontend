@@ -1,12 +1,13 @@
 // hooks/useAttendances.ts
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { attendancesApi } from "@/src/lib/api/attendances";
 import { employeesApi } from "@/src/lib/api/employees";
 import { shiftsApi } from "@/src/lib/api/shifts";
+import { useDebounce } from "@/hooks/useDebounce";
 import type { ApiError } from "@/lib/types/api";
 import type {
   Attendance,
@@ -34,21 +35,37 @@ export function useAttendances() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<AttendanceFilters>(initialFilters);
-  const [dialogState, setDialogState] = useState<AttendanceDialogState>(initialDialogState);
-  const [selectedAttendance, setSelectedAttendance] = useState<Attendance | null>(null);
+  const [dialogState, setDialogState] =
+    useState<AttendanceDialogState>(initialDialogState);
+  const [selectedAttendance, setSelectedAttendance] =
+    useState<Attendance | null>(null);
   const [exporting, setExporting] = useState(false);
 
-  // Fetch attendances
+  // ✅ Debounce search filter
+  const debouncedSearch = useDebounce(filters.search, 500);
+
+  // ✅ Memoize filters untuk query - gunakan debouncedSearch
+  const queryFilters = useMemo(
+    () => ({
+      search: debouncedSearch,
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      clockInStatus: filters.clockInStatus,
+    }),
+    [debouncedSearch, filters.startDate, filters.endDate, filters.clockInStatus]
+  );
+
+  // Fetch attendances - gunakan queryFilters bukan filters langsung
   const { data, isLoading } = useQuery({
-    queryKey: ["attendances", page, filters],
+    queryKey: ["attendances", page, queryFilters],
     queryFn: () =>
       attendancesApi.getAll({
         page,
         limit: 10,
-        search: filters.search,
-        startDate: filters.startDate,
-        endDate: filters.endDate,
-        clockInStatus: filters.clockInStatus,
+        search: queryFilters.search,
+        startDate: queryFilters.startDate,
+        endDate: queryFilters.endDate,
+        clockInStatus: queryFilters.clockInStatus,
       }),
   });
 
@@ -66,7 +83,8 @@ export function useAttendances() {
 
   // Create manual entry mutation
   const createManualEntryMutation = useMutation({
-    mutationFn: (entry: ManualEntryDto) => attendancesApi.createManualEntry(entry),
+    mutationFn: (entry: ManualEntryDto) =>
+      attendancesApi.createManualEntry(entry),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["attendances"] });
       closeDialog("manualEntry");
@@ -92,7 +110,10 @@ export function useAttendances() {
   });
 
   // Dialog handlers
-  const openDialog = (type: keyof AttendanceDialogState, attendance?: Attendance) => {
+  const openDialog = (
+    type: keyof AttendanceDialogState,
+    attendance?: Attendance
+  ) => {
     if (attendance) setSelectedAttendance(attendance);
     setDialogState((prev) => ({ ...prev, [type]: true }));
   };
@@ -104,14 +125,24 @@ export function useAttendances() {
     }
   };
 
-  // Filter handlers
+  // Filter handlers - ✅ Tidak perlu reset page untuk search karena debounce handle itu
   const updateFilter = <K extends keyof AttendanceFilters>(
     key: K,
     value: AttendanceFilters[K]
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
-    setPage(1); // Reset to first page on filter change
+    // Reset page hanya untuk filter non-search (karena search sudah debounced)
+    if (key !== "search") {
+      setPage(1);
+    }
   };
+
+  // ✅ Reset page ketika debounced search berubah
+  useMemo(() => {
+    if (debouncedSearch !== "") {
+      setPage(1);
+    }
+  }, [debouncedSearch]);
 
   const resetFilters = () => {
     setFilters(initialFilters);
@@ -159,7 +190,10 @@ export function useAttendances() {
     setExporting(true);
     try {
       const blob = await attendancesApi.exportExcel(getExportParams());
-      downloadFile(blob, `Laporan_Presensi_${format(new Date(), "yyyyMMdd")}.xlsx`);
+      downloadFile(
+        blob,
+        `Laporan_Presensi_${format(new Date(), "yyyyMMdd")}.xlsx`
+      );
       toast.success("File Excel berhasil diunduh!");
     } catch (error) {
       const apiError = error as ApiError;
@@ -173,7 +207,10 @@ export function useAttendances() {
     setExporting(true);
     try {
       const blob = await attendancesApi.exportPDF(getExportParams());
-      downloadFile(blob, `Laporan_Presensi_${format(new Date(), "yyyyMMdd")}.pdf`);
+      downloadFile(
+        blob,
+        `Laporan_Presensi_${format(new Date(), "yyyyMMdd")}.pdf`
+      );
       toast.success("File PDF berhasil diunduh!");
     } catch (error) {
       const apiError = error as ApiError;
