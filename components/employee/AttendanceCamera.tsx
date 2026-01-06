@@ -95,7 +95,9 @@ export function AttendanceCamera({
                     disabled={geolocation.loading}
                   >
                     <RefreshCw
-                      className={`h-4 w-4 ${geolocation.loading ? "animate-spin" : ""}`}
+                      className={`h-4 w-4 ${
+                        geolocation.loading ? "animate-spin" : ""
+                      }`}
                     />
                   </Button>
                 </div>
@@ -123,7 +125,8 @@ export function AttendanceCamera({
                     autoPlay
                     playsInline
                     muted
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover bg-black"
+                    style={{ minHeight: "100%" }}
                   />
                 )}
                 {camera.photo && (
@@ -146,11 +149,7 @@ export function AttendanceCamera({
 
               {/* Camera Actions */}
               {camera.isOpen && !camera.photo && (
-                <Button
-                  className="w-full"
-                  size="lg"
-                  onClick={onCapture}
-                >
+                <Button className="w-full" size="lg" onClick={onCapture}>
                   <Camera className="mr-2 h-5 w-5" />
                   Ambil Foto
                 </Button>
@@ -158,7 +157,11 @@ export function AttendanceCamera({
 
               {camera.photo && (
                 <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" onClick={onRetake} disabled={isSubmitting}>
+                  <Button
+                    variant="outline"
+                    onClick={onRetake}
+                    disabled={isSubmitting}
+                  >
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Ulangi
                   </Button>

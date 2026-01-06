@@ -1,3 +1,5 @@
+// src/app/attendance/page.tsx
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -10,6 +12,7 @@ import axios, { isAxiosError } from "axios";
 import { toast } from "sonner";
 import { z } from "zod";
 import Image from "next/image";
+import { videoConstraints } from "@/hooks/useAttendances";
 
 // 1. Definisi Skema Validasi dengan Zod
 const attendanceSchema = z.object({
@@ -154,21 +157,27 @@ export default function AttendancePage() {
             E-Presensi Mobile
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0 bg-slate-200 relative aspect-3/4 flex items-center justify-center overflow-hidden">
+        <CardContent className="p-0 bg-black relative aspect-3/4 flex items-center justify-center overflow-hidden">
           {!imgSrc ? (
             <Webcam
               audio={false}
               ref={webcamRef}
               screenshotFormat="image/jpeg"
-              className="w-full h-full object-cover"
-              videoConstraints={{ facingMode: "user" }}
+              // Tambahkan mirror={true} jika ingin seperti cermin (biasanya default untuk selfie)
+              mirrored={true}
+              className="absolute inset-0 w-full h-full object-cover"
+              videoConstraints={videoConstraints}
+              // Tambahkan ini untuk memaksa browser "membangunkan" kamera
+              onUserMedia={() => console.log("Camera ready")}
+              onUserMediaError={(err) => {
+                console.error(err);
+                toast.error("Gagal mengakses kamera. Pastikan izin diberikan.");
+              }}
             />
           ) : (
-            <Image
-              src={imgSrc}
-              alt="Preview"
-              className="w-full h-full object-cover"
-            />
+            <div className="relative w-full h-full">
+              <Image src={imgSrc} alt="Preview" fill className="object-cover" />
+            </div>
           )}
         </CardContent>
       </Card>

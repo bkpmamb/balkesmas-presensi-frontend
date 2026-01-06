@@ -33,6 +33,62 @@ export function useEmployeeAttendance() {
     error: null,
   });
 
+  // --- LOGIKA PERBAIKAN KAMERA ---
+
+  // Fungsi untuk memasang stream ke element video secara paksa
+  const attachStream = useCallback(() => {
+    if (streamRef.current && videoRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current
+        .play()
+        .catch((err) => console.error("Video play failed:", err));
+    }
+  }, []);
+
+  // Efek untuk memantau kapan videoRef siap di DOM
+  useEffect(() => {
+    if (camera.isOpen && !camera.photo) {
+      // Gunakan sedikit delay/timeout untuk memastikan elemen video sudah dirender oleh React
+      const timer = setTimeout(() => {
+        attachStream();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [camera.isOpen, camera.photo, attachStream]);
+
+  const openCamera = useCallback(async () => {
+    try {
+      setCamera((prev) => ({ ...prev, error: null, isOpen: true }));
+
+      // Matikan stream lama jika ada
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user",
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      });
+
+      streamRef.current = stream;
+      attachStream();
+    } catch (error) {
+      console.error("Camera Error:", error);
+      setCamera((prev) => ({
+        ...prev,
+        isOpen: false,
+        error:
+          "Gagal mengakses kamera. Mohon izinkan akses kamera di pengaturan browser.",
+      }));
+    }
+  }, [attachStream]);
+
+  // --- AKHIR LOGIKA PERBAIKAN KAMERA ---
+
   // Fetch profile
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["employee-profile"],
@@ -47,13 +103,12 @@ export function useEmployeeAttendance() {
 
   // Fetch today's attendance
   const { data: todayAttendance, isLoading: attendanceLoading } = useQuery({
-    queryKey: ["today-attendance", new Date().getDate()], // Berubah setiap hari
+    queryKey: ["today-attendance", new Date().getDate()],
     queryFn: employeeAttendanceApi.getTodayAttendance,
     staleTime: 0,
-    gcTime: 0, // Hapus cache segera
+    gcTime: 0,
   });
 
-  // Clock in mutation
   const clockInMutation = useMutation({
     mutationFn: employeeAttendanceApi.clockIn,
     onSuccess: (data) => {
@@ -66,7 +121,6 @@ export function useEmployeeAttendance() {
     },
   });
 
-  // Clock out mutation
   const clockOutMutation = useMutation({
     mutationFn: employeeAttendanceApi.clockOut,
     onSuccess: (data) => {
@@ -79,7 +133,6 @@ export function useEmployeeAttendance() {
     },
   });
 
-  // Get current location
   const getCurrentLocation = useCallback(() => {
     setGeolocation((prev) => ({ ...prev, loading: true, error: null }));
 
@@ -105,7 +158,8 @@ export function useEmployeeAttendance() {
         let errorMessage = "Gagal mendapatkan lokasi";
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = "Izin lokasi ditolak. Mohon aktifkan izin lokasi.";
+            errorMessage =
+              "Izin lokasi ditolak. Mohon aktifkan GPS dan izinkan akses lokasi.";
             break;
           case error.POSITION_UNAVAILABLE:
             errorMessage = "Informasi lokasi tidak tersedia.";
@@ -120,37 +174,10 @@ export function useEmployeeAttendance() {
           error: errorMessage,
         }));
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }, []);
 
-  // Open camera
-  const openCamera = useCallback(async () => {
-    try {
-      setCamera((prev) => ({ ...prev, error: null }));
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: 640, height: 480 },
-        audio: false,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-      setCamera((prev) => ({ ...prev, isOpen: true }));
-    } catch (error) {
-      console.log(error);
-      setCamera((prev) => ({
-        ...prev,
-        error: "Gagal mengakses kamera. Mohon izinkan akses kamera.",
-      }));
-    }
-  }, []);
-
-  // Close camera
   const closeCamera = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
@@ -159,11 +186,11 @@ export function useEmployeeAttendance() {
     setCamera({ isOpen: false, photo: null, error: null });
   }, []);
 
-  // Capture photo
   const capturePhoto = useCallback(() => {
     if (!videoRef.current) return;
 
     const canvas = document.createElement("canvas");
+    // Gunakan resolusi video asli agar tidak stretch
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
     const ctx = canvas.getContext("2d");
@@ -171,24 +198,20 @@ export function useEmployeeAttendance() {
     if (ctx) {
       ctx.drawImage(videoRef.current, 0, 0);
       const photoData = canvas.toDataURL("image/jpeg", 0.8);
-      setCamera((prev) => ({ ...prev, photo: photoData }));
+      setCamera((prev) => ({ ...prev, photo: photoData, isOpen: false }));
 
-      // Stop camera after capture
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       }
-      setCamera((prev) => ({ ...prev, isOpen: false }));
     }
   }, []);
 
-  // Retake photo
   const retakePhoto = useCallback(() => {
     setCamera((prev) => ({ ...prev, photo: null }));
     openCamera();
   }, [openCamera]);
 
-  // Reset state
   const resetState = useCallback(() => {
     closeCamera();
     setCurrentAction(null);
@@ -198,10 +221,8 @@ export function useEmployeeAttendance() {
       error: null,
       loading: false,
     });
-    setCamera({ isOpen: false, photo: null, error: null });
   }, [closeCamera]);
 
-  // Start attendance process
   const startAttendance = useCallback(
     (action: AttendanceAction) => {
       setCurrentAction(action);
@@ -211,26 +232,32 @@ export function useEmployeeAttendance() {
     [getCurrentLocation, openCamera]
   );
 
-  // Submit attendance
   const submitAttendance = useCallback(async () => {
     if (!geolocation.latitude || !geolocation.longitude || !camera.photo) {
       toast.error("Lokasi dan foto wajib diisi");
       return;
     }
 
-    // Convert base64 to blob
-    const response = await fetch(camera.photo);
-    const blob = await response.blob();
+    try {
+      // 1. Konversi base64 ke Blob
+      const res = await fetch(camera.photo);
+      const blob = await res.blob();
 
-    const formData = new FormData();
-    formData.append("latitude", geolocation.latitude.toString());
-    formData.append("longitude", geolocation.longitude.toString());
-    formData.append("photo", blob, "attendance.jpg");
+      // 2. Buat FormData
+      const formData = new FormData();
+      formData.append("latitude", geolocation.latitude.toString());
+      formData.append("longitude", geolocation.longitude.toString());
 
-    if (currentAction === "clock-in") {
-      await clockInMutation.mutateAsync(formData);
-    } else if (currentAction === "clock-out") {
-      await clockOutMutation.mutateAsync(formData);
+      // Pastikan ini bernama "image" sesuai backend
+      formData.append("image", blob, "attendance.jpg");
+
+      if (currentAction === "clock-in") {
+        await clockInMutation.mutateAsync(formData);
+      } else {
+        await clockOutMutation.mutateAsync(formData);
+      }
+    } catch (err) {
+      console.error("Client Error:", err);
     }
   }, [
     geolocation,
@@ -240,13 +267,11 @@ export function useEmployeeAttendance() {
     clockOutMutation,
   ]);
 
-  // Handle logout
   const handleLogout = useCallback(() => {
     logout();
     router.push("/login");
   }, [logout, router]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (streamRef.current) {
@@ -255,13 +280,7 @@ export function useEmployeeAttendance() {
     };
   }, []);
 
-  // Computed values
   const isLoading = profileLoading || scheduleLoading || attendanceLoading;
-  console.log("--- DEBUG FRONTEND ---");
-  console.log("Today Schedule:", todaySchedule);
-  console.log("Today Attendance:", todayAttendance);
-  console.log("Logic canClockIn:", !!todaySchedule && !todayAttendance);
-  console.log("----------------------");
   const canClockIn = todaySchedule && !todayAttendance;
   const canClockOut = todayAttendance && !todayAttendance.clockOut;
   const isSubmitting = clockInMutation.isPending || clockOutMutation.isPending;
@@ -271,28 +290,19 @@ export function useEmployeeAttendance() {
     camera.photo !== null;
 
   return {
-    // Data
     user,
     profile,
     todaySchedule,
     todayAttendance,
-
-    // State
     currentAction,
     geolocation,
     camera,
     videoRef,
-
-    // Loading
     isLoading,
     isSubmitting,
-
-    // Computed
     canClockIn,
     canClockOut,
     isReadyToSubmit,
-
-    // Actions
     startAttendance,
     submitAttendance,
     capturePhoto,

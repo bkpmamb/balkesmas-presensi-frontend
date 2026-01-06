@@ -271,3 +271,9 @@ function downloadFile(blob: Blob, filename: string) {
   window.URL.revokeObjectURL(url);
   document.body.removeChild(a);
 }
+
+export const videoConstraints = {
+  width: { ideal: 720 },
+  height: { ideal: 1280 }, // Sesuai aspek rasio mobile (portrait)
+  facingMode: "user",
+};

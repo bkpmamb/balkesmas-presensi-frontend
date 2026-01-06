@@ -10,8 +10,8 @@ import type {
   EmployeeStatistics,
   ChangePasswordDto,
   GenericResponse,
-  AttendanceSummary,
-  PaginationData,
+  // AttendanceSummary,
+  // PaginationData,
   AttendanceHistoryResponse,
   WorkSchedule,
 } from "@/lib/types/employee-attendance";
@@ -60,9 +60,10 @@ export const employeeAttendanceApi = {
       "/employee/attendance/clock-in",
       formData,
       {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        // Mengosongkan headers agar browser yang menentukan boundary
+        headers: {},
+        // Penting bagi Axios agar tidak mengubah FormData menjadi JSON string
+        transformRequest: [(data) => data],
       }
     );
     return data;
