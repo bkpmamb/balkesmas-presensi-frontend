@@ -35,7 +35,7 @@ export const employeeAttendanceApi = {
     const { data } = await apiClient.get<{
       success: boolean;
       data: TodayAttendance | null;
-    }>(`/employee/attendance/today?t=${timestamp}`); // <-- Tambahkan ?t=...
+    }>(`/employee/attendance/today?t=${timestamp}`); // ada t
 
     return data.data;
   },
