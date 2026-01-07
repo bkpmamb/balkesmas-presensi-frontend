@@ -96,7 +96,8 @@ export function useEmployeeAttendance() {
   });
 
   const { data: todayAttendance, isLoading: attendanceLoading } = useQuery({
-    queryKey: ["today-attendance", new Date().getDate()],
+    // queryKey: ["today-attendance", new Date().getDate()],
+    queryKey: ["today-attendance", user?._id],
     queryFn: employeeAttendanceApi.getTodayAttendance,
     staleTime: 0,
     gcTime: 0,
@@ -313,7 +314,8 @@ export function useEmployeeAttendance() {
 
   const isLoading = profileLoading || scheduleLoading || attendanceLoading;
   const canClockIn = todaySchedule && !todayAttendance;
-  const canClockOut = todayAttendance && !todayAttendance.clockOut;
+  // const canClockOut = todayAttendance && !todayAttendance.clockOut;
+  const canClockOut = !!(todayAttendance && !todayAttendance.clockOut);
   const isSubmitting = clockInMutation.isPending || clockOutMutation.isPending;
   const isReadyToSubmit =
     geolocation.latitude !== null && camera.photo !== null;
