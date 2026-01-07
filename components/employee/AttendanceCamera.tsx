@@ -9,11 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Camera,
   X,
-  Check,
   RefreshCw,
   MapPin,
   Loader2,
   AlertCircle,
+  Send,
 } from "lucide-react";
 import Image from "next/image";
 import type {
@@ -52,7 +52,7 @@ export function AttendanceCamera({
   if (!action) return null;
 
   const actionLabel = action === "clock-in" ? "Clock In" : "Clock Out";
-  const actionColor = action === "clock-in" ? "green" : "blue";
+  // const actionColor = action === "clock-in" ? "green" : "blue";
 
   return (
     <AnimatePresence>
@@ -167,15 +167,25 @@ export function AttendanceCamera({
                   </Button>
                   <Button
                     onClick={onSubmit}
-                    disabled={!isReadyToSubmit || isSubmitting}
-                    className={`bg-${actionColor}-600 hover:bg-${actionColor}-700`}
+                    disabled={!isReadyToSubmit || isSubmitting} // Disable jika belum siap atau sedang kirim
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white relative"
                   >
                     {isSubmitting ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <>
+                        <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+                          <Loader2 className="h-10 w-10 text-blue-600 animate-spin mb-2" />
+                          <p className="text-sm font-bold text-slate-700">
+                            Menempelkan Watermark & Mengirim...
+                          </p>
+                        </div>
+                        Memproses...
+                      </>
                     ) : (
-                      <Check className="mr-2 h-4 w-4" />
+                      <>
+                        <Send className="mr-2 h-4 w-4" />
+                        Kirim Absen
+                      </>
                     )}
-                    {isSubmitting ? "Memproses..." : "Konfirmasi"}
                   </Button>
                 </div>
               )}

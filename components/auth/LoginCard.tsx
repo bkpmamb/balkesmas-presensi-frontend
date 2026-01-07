@@ -6,7 +6,6 @@ import { motion } from "framer-motion";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -53,11 +52,11 @@ export function LoginCard({
                 Masuk ke Akun Anda
               </CardTitle>
             </motion.div>
-            <motion.div variants={loginAnimations.formItem}>
+            {/* <motion.div variants={loginAnimations.formItem}>
               <CardDescription className="text-center text-gray-500 text-sm sm:text-base">
                 Silakan masukkan kredensial Anda untuk melanjutkan
               </CardDescription>
-            </motion.div>
+            </motion.div> */}
           </CardHeader>
 
           <CardContent className="space-y-4 sm:space-y-6">

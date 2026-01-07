@@ -60,7 +60,7 @@ interface SidebarProps {
 export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout, user } = useAuthStore();
+  const { logout } = useAuthStore();
 
   const handleLogout = () => {
     logout();
@@ -122,6 +122,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             <Link
               key={item.name}
               href={item.href}
+              onClick={onClose}
               className={cn(
                 "group flex items-center rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200",
                 isActive

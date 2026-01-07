@@ -1,7 +1,6 @@
 // src/lib/api/client.ts
 
-import axios, { AxiosError } from "axios";
-import type { ApiErrorResponse } from "@/lib/types/api";
+import axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -68,19 +67,16 @@ apiClient.interceptors.request.use(
 // ✅ Response interceptor
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<ApiErrorResponse>) => {
-    if (error.response?.status === 401) {
+  (error) => {
+    const isLoginRequest = error.config.url.includes("/auth/login");
+
+    // Hanya redirect jika error 401 terjadi BUKAN di halaman login
+    if (error.response?.status === 401 && !isLoginRequest) {
       console.log("🔐 Unauthorized - Clearing all storages");
       clearAuthAndRedirect();
     }
 
-    const message =
-      error.response?.data?.message || error.message || "An error occurred";
-    return Promise.reject({
-      message,
-      status: error.response?.status,
-      data: error.response?.data,
-    });
+    return Promise.reject(error);
   }
 );
 

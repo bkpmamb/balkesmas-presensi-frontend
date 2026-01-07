@@ -12,6 +12,13 @@ import type {
   CameraState,
   AttendanceAction,
 } from "@/lib/types/employee-attendance";
+import { processImageWithWatermark } from "@/src/lib/utils/watermark";
+import { getAddressFromCoords } from "@/src/lib/utils/geocoding"; // Import helper baru
+
+// Pastikan GeolocationState di types mendukung field 'address'
+interface ExtendedGeolocationState extends GeolocationState {
+  address: string | null;
+}
 
 export function useEmployeeAttendance() {
   const router = useRouter();
@@ -21,9 +28,10 @@ export function useEmployeeAttendance() {
   const streamRef = useRef<MediaStream | null>(null);
 
   const [currentAction, setCurrentAction] = useState<AttendanceAction>(null);
-  const [geolocation, setGeolocation] = useState<GeolocationState>({
+  const [geolocation, setGeolocation] = useState<ExtendedGeolocationState>({
     latitude: null,
     longitude: null,
+    address: null,
     error: null,
     loading: false,
   });
@@ -33,9 +41,7 @@ export function useEmployeeAttendance() {
     error: null,
   });
 
-  // --- LOGIKA PERBAIKAN KAMERA ---
-
-  // Fungsi untuk memasang stream ke element video secara paksa
+  // --- LOGIKA KAMERA ---
   const attachStream = useCallback(() => {
     if (streamRef.current && videoRef.current) {
       videoRef.current.srcObject = streamRef.current;
@@ -45,13 +51,9 @@ export function useEmployeeAttendance() {
     }
   }, []);
 
-  // Efek untuk memantau kapan videoRef siap di DOM
   useEffect(() => {
     if (camera.isOpen && !camera.photo) {
-      // Gunakan sedikit delay/timeout untuk memastikan elemen video sudah dirender oleh React
-      const timer = setTimeout(() => {
-        attachStream();
-      }, 100);
+      const timer = setTimeout(() => attachStream(), 100);
       return () => clearTimeout(timer);
     }
   }, [camera.isOpen, camera.photo, attachStream]);
@@ -59,12 +61,9 @@ export function useEmployeeAttendance() {
   const openCamera = useCallback(async () => {
     try {
       setCamera((prev) => ({ ...prev, error: null, isOpen: true }));
-
-      // Matikan stream lama jika ada
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
       }
-
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "user",
@@ -73,35 +72,29 @@ export function useEmployeeAttendance() {
         },
         audio: false,
       });
-
       streamRef.current = stream;
       attachStream();
     } catch (error) {
-      console.error("Camera Error:", error);
+      console.log(error);
       setCamera((prev) => ({
         ...prev,
         isOpen: false,
-        error:
-          "Gagal mengakses kamera. Mohon izinkan akses kamera di pengaturan browser.",
+        error: "Gagal mengakses kamera. Mohon izinkan akses kamera.",
       }));
     }
   }, [attachStream]);
 
-  // --- AKHIR LOGIKA PERBAIKAN KAMERA ---
-
-  // Fetch profile
+  // --- FETCHING DATA ---
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["employee-profile"],
     queryFn: employeeAttendanceApi.getProfile,
   });
 
-  // Fetch today's schedule
   const { data: todaySchedule, isLoading: scheduleLoading } = useQuery({
     queryKey: ["today-schedule"],
     queryFn: employeeAttendanceApi.getTodaySchedule,
   });
 
-  // Fetch today's attendance
   const { data: todayAttendance, isLoading: attendanceLoading } = useQuery({
     queryKey: ["today-attendance", new Date().getDate()],
     queryFn: employeeAttendanceApi.getTodayAttendance,
@@ -109,6 +102,7 @@ export function useEmployeeAttendance() {
     gcTime: 0,
   });
 
+  // --- MUTATIONS ---
   const clockInMutation = useMutation({
     mutationFn: employeeAttendanceApi.clockIn,
     onSuccess: (data) => {
@@ -116,9 +110,8 @@ export function useEmployeeAttendance() {
       toast.success(data.message);
       resetState();
     },
-    onError: (error: ApiError) => {
-      toast.error(error.message || "Gagal melakukan clock in");
-    },
+    onError: (error: ApiError) =>
+      toast.error(error.message || "Gagal clock in"),
   });
 
   const clockOutMutation = useMutation({
@@ -128,11 +121,11 @@ export function useEmployeeAttendance() {
       toast.success(data.message);
       resetState();
     },
-    onError: (error: ApiError) => {
-      toast.error(error.message || "Gagal melakukan clock out");
-    },
+    onError: (error: ApiError) =>
+      toast.error(error.message || "Gagal clock out"),
   });
 
+  // --- GEOLOCATION DENGAN REVERSE GEOCODE ---
   const getCurrentLocation = useCallback(() => {
     setGeolocation((prev) => ({ ...prev, loading: true, error: null }));
 
@@ -140,44 +133,39 @@ export function useEmployeeAttendance() {
       setGeolocation((prev) => ({
         ...prev,
         loading: false,
-        error: "Geolocation tidak didukung di browser Anda",
+        error: "Geolocation tidak didukung",
       }));
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setGeolocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          error: null,
-          loading: false,
+        const { latitude, longitude } = position.coords;
+
+        // Dapatkan Alamat secara Async tanpa memblokir state koordinat
+        getAddressFromCoords(latitude, longitude).then((addr) => {
+          setGeolocation({
+            latitude,
+            longitude,
+            address: addr,
+            error: null,
+            loading: false,
+          });
         });
       },
       (error) => {
-        let errorMessage = "Gagal mendapatkan lokasi";
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage =
-              "Izin lokasi ditolak. Mohon aktifkan GPS dan izinkan akses lokasi.";
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = "Informasi lokasi tidak tersedia.";
-            break;
-          case error.TIMEOUT:
-            errorMessage = "Permintaan lokasi timeout.";
-            break;
-        }
+        console.log(error);
         setGeolocation((prev) => ({
           ...prev,
           loading: false,
-          error: errorMessage,
+          error: "Gagal mendapatkan lokasi. Pastikan GPS aktif.",
         }));
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }, []);
 
+  // --- CAMERA ACTIONS ---
   const closeCamera = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
@@ -187,25 +175,49 @@ export function useEmployeeAttendance() {
   }, []);
 
   const capturePhoto = useCallback(() => {
-    if (!videoRef.current) return;
+    // Pastikan videoRef ada dan sedang memutar stream
+    if (!videoRef.current || videoRef.current.readyState < 2) {
+      toast.error("Kamera belum siap, silakan tunggu sebentar.");
+      return;
+    }
 
+    const video = videoRef.current;
     const canvas = document.createElement("canvas");
-    // Gunakan resolusi video asli agar tidak stretch
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
+
+    // 1. Ambil resolusi asli dari stream video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
     const ctx = canvas.getContext("2d");
-
     if (ctx) {
-      ctx.drawImage(videoRef.current, 0, 0);
-      const photoData = canvas.toDataURL("image/jpeg", 0.8);
-      setCamera((prev) => ({ ...prev, photo: photoData, isOpen: false }));
+      try {
+        // 2. Gambar ke canvas TERLEBIH DAHULU
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
+        // 3. Konversi ke base64 (simpan ke state)
+        const photoData = canvas.toDataURL("image/jpeg", 0.8);
+
+        // 4. Update state: Set foto dan tutup jendela kamera
+        setCamera((prev) => ({
+          ...prev,
+          photo: photoData,
+          isOpen: false, // Jendela kamera di UI ditutup
+        }));
+
+        // 5. BARU matikan stream kamera (Penting: urutan ini krusial)
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((track) => track.stop());
+          streamRef.current = null;
+        }
+      } catch (err) {
+        console.error("Gagal capture gambar:", err);
+        setCamera((prev) => ({
+          ...prev,
+          error: "Gagal memproses jepretan foto.",
+        }));
       }
     }
-  }, []);
+  }, []); // Hapus closeCamera dari dependency jika itu menyebabkan re-render
 
   const retakePhoto = useCallback(() => {
     setCamera((prev) => ({ ...prev, photo: null }));
@@ -218,6 +230,7 @@ export function useEmployeeAttendance() {
     setGeolocation({
       latitude: null,
       longitude: null,
+      address: null,
       error: null,
       loading: false,
     });
@@ -232,6 +245,7 @@ export function useEmployeeAttendance() {
     [getCurrentLocation, openCamera]
   );
 
+  // --- SUBMIT DENGAN WATERMARK FRONTEND ---
   const submitAttendance = useCallback(async () => {
     if (!geolocation.latitude || !geolocation.longitude || !camera.photo) {
       toast.error("Lokasi dan foto wajib diisi");
@@ -239,30 +253,48 @@ export function useEmployeeAttendance() {
     }
 
     try {
-      // 1. Ubah Base64 ke Blob (Mencegah pengiriman string kosong/{} )
+      // 1. Convert capture ke File
       const response = await fetch(camera.photo);
-      const blob = await response.blob();
+      const originalBlob = await response.blob();
+      const originalFile = new File([originalBlob], "capture.jpg", {
+        type: "image/jpeg",
+      });
 
-      // 2. Bungkus ke FormData
+      // 2. Generate Watermark
+      const watermarkedBlob = await processImageWithWatermark(originalFile, {
+        name: profile?.name || "Karyawan",
+        date: new Date().toLocaleString("id-ID", {
+          dateStyle: "full",
+          timeStyle: "short",
+        }),
+        location: geolocation.address || "Lokasi Absensi",
+        coordinates: `${geolocation.latitude.toFixed(
+          6
+        )}, ${geolocation.longitude.toFixed(6)}`,
+      });
+
+      // 3. Prepare FormData
       const formData = new FormData();
       formData.append("latitude", geolocation.latitude.toString());
       formData.append("longitude", geolocation.longitude.toString());
+      formData.append("image", watermarkedBlob, "attendance_final.jpg");
 
-      // 3. Nama field HARUS "image" (harus sama dengan upload.single("image") di backend)
-      formData.append("image", blob, "attendance.jpg");
-
+      // 4. Submit
       if (currentAction === "clock-in") {
         await clockInMutation.mutateAsync(formData);
       } else {
         await clockOutMutation.mutateAsync(formData);
       }
     } catch (err) {
-      console.error("Submit Error:", err);
+      // Menggunakan 'err' untuk menghilangkan warning ts(6133)
+      console.error("Submit Error detail:", err);
+      toast.error("Gagal memproses gambar.");
     }
   }, [
     geolocation,
     camera.photo,
     currentAction,
+    profile, // Gunakan objek utuh sesuai saran React Compiler
     clockInMutation,
     clockOutMutation,
   ]);
@@ -274,9 +306,8 @@ export function useEmployeeAttendance() {
 
   useEffect(() => {
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      }
+      if (streamRef.current)
+        streamRef.current.getTracks().forEach((t) => t.stop());
     };
   }, []);
 
@@ -285,9 +316,7 @@ export function useEmployeeAttendance() {
   const canClockOut = todayAttendance && !todayAttendance.clockOut;
   const isSubmitting = clockInMutation.isPending || clockOutMutation.isPending;
   const isReadyToSubmit =
-    geolocation.latitude !== null &&
-    geolocation.longitude !== null &&
-    camera.photo !== null;
+    geolocation.latitude !== null && camera.photo !== null;
 
   return {
     user,

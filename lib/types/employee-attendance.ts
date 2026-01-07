@@ -96,6 +96,7 @@ export interface GeolocationState {
   longitude: number | null;
   error: string | null;
   loading: boolean;
+  address?: string | null;
 }
 
 export interface CameraState {

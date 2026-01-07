@@ -5,7 +5,6 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  Calendar,
   LucideIcon,
 } from "lucide-react";
 import type { AttendanceSummary } from "@/lib/types/employee-attendance";

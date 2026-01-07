@@ -135,3 +135,29 @@ export interface ExportParams {
   endDate?: string;
   clockInStatus?: string;
 }
+
+export interface AttendanceHistoryItem extends Omit<Attendance, "user"> {
+  workDuration?: string;
+}
+
+/**
+ * Interface untuk Summary khusus Riwayat Pribadi
+ * Berdasarkan controller: totalHadir, totalTerlambat, totalPulangAwal, totalMenitKerja
+ */
+export interface AttendanceHistorySummary {
+  totalHadir: number;
+  totalTerlambat: number;
+  totalPulangAwal: number;
+  totalMenitKerja: number;
+}
+
+/**
+ * Response interface untuk endpoint /api/attendance/my-history
+ */
+export interface AttendanceHistoryResponse {
+  success: boolean;
+  message: string;
+  summary: AttendanceHistorySummary;
+  data: AttendanceHistoryItem[];
+  pagination: AttendancePagination;
+}

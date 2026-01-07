@@ -24,7 +24,7 @@ function LoginContent() {
         variants={loginAnimations.container}
         initial="hidden"
         animate="visible"
-        className="w-full max-w-6xl flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-12"
+        className="w-full max-w-6xl flex flex-col lg:flex-row items-center justify-center gap-2 md:gap-8 lg:gap-12"
       >
         <LoginBrandSection />
 

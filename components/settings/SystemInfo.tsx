@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Info } from "lucide-react";
-import type { SystemInfoItem } from "@/lib/types/settings";
 
 interface SystemInfoProps {
   categoriesCount: number;

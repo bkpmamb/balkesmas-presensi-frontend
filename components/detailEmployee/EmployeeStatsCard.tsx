@@ -1,8 +1,6 @@
 // src/components/detailEmployee/EmployeeStatsCard.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import {
-  Calendar,
   Clock,
   CheckCircle,
   AlertTriangle,
@@ -31,7 +29,7 @@ export function EmployeeStatsCard({ statistics }: EmployeeStatsCardProps) {
     );
   }
 
-  const attendanceRate = statistics.attendanceRate || 0;
+  // const attendanceRate = statistics.attendanceRate || 0;
   const averageWorkHours = statistics.averageWorkHours || 0;
 
   return (

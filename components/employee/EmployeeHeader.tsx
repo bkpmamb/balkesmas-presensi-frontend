@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, ChevronDown, History } from "lucide-react";
+import { LogOut, User, ChevronDown, History, RotateCcwKey } from "lucide-react";
 import { attendanceAnimations } from "@/config/employee.config";
 import type { EmployeeProfile } from "@/lib/types/employee-attendance";
 import Link from "next/link";
@@ -90,7 +90,7 @@ export function EmployeeHeader({ profile, onLogout }: EmployeeHeaderProps) {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <History className="mr-2 h-4 w-4" />
+              <RotateCcwKey className="mr-2 h-4 w-4" />
               <Link
                 href="/employee/profile/change-password"
                 className="flex items-center w-full cursor-pointer"
