@@ -30,7 +30,7 @@ export const processImageWithWatermark = async (
         }
 
         // --- OPTIMASI 1: RESIZING ---
-        const MAX_WIDTH = 1080; // Batasi lebar maksimal 1080px
+        const MAX_WIDTH = 1080;
         let width = img.width;
         let height = img.height;
 
@@ -42,22 +42,56 @@ export const processImageWithWatermark = async (
         canvas.width = width;
         canvas.height = height;
 
-        // Gambar foto dengan ukuran yang sudah di-resize
+        // 1. Gambar foto utama
         ctx.drawImage(img, 0, 0, width, height);
 
-        // --- LOGIKA WATERMARK (Gunakan variabel 'width' & 'height' baru) ---
-        const baseSize = width * 0.03;
+        // --- LOGIKA WATERMARK ---
         const padding = width * 0.04;
-        const lineHeight = baseSize * 1.5;
+        const fontSizeMain = width * 0.035;
+        const fontSizeSub = width * 0.025;
+        const lineHeight = fontSizeMain * 1.4;
 
-        // ... (Logika gradient dan fillText tetap sama menggunakan width/height baru) ...
-        // Contoh penyesuaian:
+        // 2. Buat Gradient Gelap di bagian bawah agar teks terbaca (Scrim)
+        const gradient = ctx.createLinearGradient(
+          0,
+          height,
+          0,
+          height - padding * 6
+        );
+        gradient.addColorStop(0, "rgba(0, 0, 0, 0.7)"); // Gelap di paling bawah
+        gradient.addColorStop(1, "rgba(0, 0, 0, 0)"); // Transparan ke atas
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, height - padding * 6, width, padding * 6);
+
+        // 3. Gambar Teks (Posisi di Kiri Bawah)
         ctx.textAlign = "left";
-        ctx.font = `bold ${baseSize * 1.2}px Inter, sans-serif`;
+        ctx.textBaseline = "bottom";
+        ctx.fillStyle = "#ffffff"; // Warna putih murni
+
+        // Baris 4: Koordinat (Paling bawah)
+        ctx.font = `${fontSizeSub}px sans-serif`;
+        ctx.fillText(data.coordinates, padding, height - padding);
+
+        // Baris 3: Alamat/Lokasi
+        ctx.font = `${fontSizeSub}px sans-serif`;
+        ctx.fillText(
+          data.location,
+          padding,
+          height - padding - lineHeight * 0.8
+        );
+
+        // Baris 2: Tanggal & Waktu
+        ctx.font = `${fontSizeSub}px sans-serif`;
+        ctx.fillText(data.date, padding, height - padding - lineHeight * 1.6);
+
+        // Baris 1: Nama Karyawan (Paling Besar)
+        ctx.font = `bold ${fontSizeMain}px sans-serif`;
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.shadowBlur = 4;
         ctx.fillText(
           data.name.toUpperCase(),
           padding,
-          height - padding - lineHeight
+          height - padding - lineHeight * 2.6
         );
 
         // --- OPTIMASI 2: QUALITY COMPRESSION ---
@@ -67,7 +101,7 @@ export const processImageWithWatermark = async (
             else reject(new Error("Canvas to Blob failed"));
           },
           "image/jpeg",
-          0.7 // Kualitas diatur ke 0.7 (70%) - Sangat optimal untuk web
+          0.8 // Kualitas 80% seimbang antara ketajaman teks dan ukuran file
         );
       };
     };
