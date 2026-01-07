@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/src/lib/store/authStore";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 
 interface LoginFormData {
   username: string;
@@ -52,20 +52,24 @@ export function useLogin() {
       await login(formData.username, formData.password);
       // Redirect akan ditangani oleh useEffect di atas saat state store berubah
     } catch (err) {
-      // 1. Gunakan Type Guard axios.isAxiosError untuk keamanan tipe
       if (axios.isAxiosError(err)) {
-        const axiosError = err as AxiosError<{ message?: string }>;
+        const status = err.response?.status;
 
-        // 2. Ambil pesan dari backend, atau gunakan fallback jika status 401
-        const errorMessage =
-          axiosError.response?.data?.message ||
-          (axiosError.response?.status === 401
-            ? "Username atau password salah, silakan coba lagi."
-            : "Terjadi kesalahan pada server. Silakan hubungi admin.");
-
-        setError(errorMessage);
+        // Prioritas 1: Jika 401, langsung berikan pesan ramah (abaikan pesan teknis backend)
+        if (status === 401) {
+          setError("Username atau password salah, silakan coba lagi.");
+        }
+        // Prioritas 2: Jika ada pesan spesifik dari backend (misal: "Akun Anda dinonaktifkan")
+        else if (err.response?.data?.message) {
+          setError(err.response.data.message);
+        }
+        // Prioritas 3: Fallback untuk error server atau koneksi
+        else {
+          setError(
+            "Gagal terhubung ke server. Silakan cek koneksi internet Anda."
+          );
+        }
       } else {
-        // Jika error bukan dari Axios (misal: error runtime JS)
         setError("Terjadi kesalahan yang tidak terduga.");
       }
     } finally {

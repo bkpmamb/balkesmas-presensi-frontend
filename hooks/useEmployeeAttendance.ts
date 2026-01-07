@@ -12,7 +12,6 @@ import type {
   CameraState,
   AttendanceAction,
 } from "@/lib/types/employee-attendance";
-import { processImageWithWatermark } from "@/src/lib/utils/watermark";
 import { getAddressFromCoords } from "@/src/lib/utils/geocoding"; // Import helper baru
 
 // Pastikan GeolocationState di types mendukung field 'address'
@@ -257,30 +256,19 @@ export function useEmployeeAttendance() {
       // 1. Convert capture ke File
       const response = await fetch(camera.photo);
       const originalBlob = await response.blob();
-      const originalFile = new File([originalBlob], "capture.jpg", {
+
+      const originalFile = new File([originalBlob], "attendance.jpg", {
         type: "image/jpeg",
       });
 
-      // 2. Generate Watermark
-      const watermarkedBlob = await processImageWithWatermark(originalFile, {
-        name: profile?.name || "Karyawan",
-        date: new Date().toLocaleString("id-ID", {
-          dateStyle: "full",
-          timeStyle: "short",
-        }),
-        location: geolocation.address || "Lokasi Absensi",
-        coordinates: `${geolocation.latitude.toFixed(
-          6
-        )}, ${geolocation.longitude.toFixed(6)}`,
-      });
-
-      // 3. Prepare FormData
+      // 2. Prepare FormData (foto asli)
       const formData = new FormData();
       formData.append("latitude", geolocation.latitude.toString());
       formData.append("longitude", geolocation.longitude.toString());
-      formData.append("image", watermarkedBlob, "attendance_final.jpg");
+      formData.append("address", geolocation.address || "");
+      formData.append("image", originalFile);
 
-      // 4. Submit
+      // 3. Submit
       if (currentAction === "clock-in") {
         await clockInMutation.mutateAsync(formData);
       } else {
@@ -295,7 +283,6 @@ export function useEmployeeAttendance() {
     geolocation,
     camera.photo,
     currentAction,
-    profile, // Gunakan objek utuh sesuai saran React Compiler
     clockInMutation,
     clockOutMutation,
   ]);
