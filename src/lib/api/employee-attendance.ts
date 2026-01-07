@@ -57,13 +57,12 @@ export const employeeAttendanceApi = {
 
   clockIn: async (formData: FormData): Promise<ClockInResponse> => {
     const { data } = await apiClient.post<ClockInResponse>(
-      "/employee/attendance/clock-in",
+      "/attendance/clock-in",
       formData,
       {
-        // Mengosongkan headers agar browser yang menentukan boundary
+        // Biarkan kosong agar browser otomatis membuat:
+        // Content-Type: multipart/form-data; boundary=----WebKitFormBoundary...
         headers: {},
-        // Penting bagi Axios agar tidak mengubah FormData menjadi JSON string
-        transformRequest: [(data) => data],
       }
     );
     return data;
@@ -71,7 +70,7 @@ export const employeeAttendanceApi = {
 
   clockOut: async (formData: FormData): Promise<ClockOutResponse> => {
     const { data } = await apiClient.post<ClockOutResponse>(
-      "/employee/attendance/clock-out",
+      "/attendance/clock-out",
       formData,
       {
         headers: {

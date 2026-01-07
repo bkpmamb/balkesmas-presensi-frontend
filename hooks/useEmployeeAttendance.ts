@@ -239,16 +239,16 @@ export function useEmployeeAttendance() {
     }
 
     try {
-      // 1. Konversi base64 ke Blob
-      const res = await fetch(camera.photo);
-      const blob = await res.blob();
+      // 1. Ubah Base64 ke Blob (Mencegah pengiriman string kosong/{} )
+      const response = await fetch(camera.photo);
+      const blob = await response.blob();
 
-      // 2. Buat FormData
+      // 2. Bungkus ke FormData
       const formData = new FormData();
       formData.append("latitude", geolocation.latitude.toString());
       formData.append("longitude", geolocation.longitude.toString());
 
-      // Pastikan ini bernama "image" sesuai backend
+      // 3. Nama field HARUS "image" (harus sama dengan upload.single("image") di backend)
       formData.append("image", blob, "attendance.jpg");
 
       if (currentAction === "clock-in") {
@@ -257,7 +257,7 @@ export function useEmployeeAttendance() {
         await clockOutMutation.mutateAsync(formData);
       }
     } catch (err) {
-      console.error("Client Error:", err);
+      console.error("Submit Error:", err);
     }
   }, [
     geolocation,
