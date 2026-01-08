@@ -94,11 +94,15 @@ export function useEmployeeAttendance() {
     queryFn: employeeAttendanceApi.getTodaySchedule,
   });
 
+  const ATTENDANCE_KEY = ["today-attendance"];
+
   const { data: todayAttendance, isLoading: attendanceLoading } = useQuery({
     // queryKey: ["today-attendance", new Date().getDate()],
-    queryKey: ["today-attendance", user?._id],
+    // queryKey: ["today-attendance", user?._id],
+    queryKey: ATTENDANCE_KEY,
     queryFn: employeeAttendanceApi.getTodayAttendance,
     staleTime: 0,
+    refetchOnMount: "always",
     gcTime: 0,
     refetchOnWindowFocus: true,
   });
@@ -107,7 +111,7 @@ export function useEmployeeAttendance() {
   const clockInMutation = useMutation({
     mutationFn: employeeAttendanceApi.clockIn,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["today-attendance"] });
+      queryClient.invalidateQueries({ queryKey: ATTENDANCE_KEY });
       toast.success(data.message);
       resetState();
     },
@@ -118,7 +122,7 @@ export function useEmployeeAttendance() {
   const clockOutMutation = useMutation({
     mutationFn: employeeAttendanceApi.clockOut,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["today-attendance"] });
+      queryClient.invalidateQueries({ queryKey: ATTENDANCE_KEY });
       toast.success(data.message);
       resetState();
     },
@@ -301,7 +305,9 @@ export function useEmployeeAttendance() {
   }, []);
 
   const isLoading = profileLoading || scheduleLoading || attendanceLoading;
-  const canClockOut = !!(todayAttendance && !todayAttendance.clockOut);
+  const canClockOut = Boolean(
+    todayAttendance && todayAttendance.clockOut === null
+  );
   const canClockIn = !todayAttendance && !!todaySchedule;
   const isSubmitting = clockInMutation.isPending || clockOutMutation.isPending;
   const isReadyToSubmit =
