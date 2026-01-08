@@ -100,6 +100,7 @@ export function useEmployeeAttendance() {
     queryFn: employeeAttendanceApi.getTodayAttendance,
     staleTime: 0,
     gcTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   // --- MUTATIONS ---
@@ -300,12 +301,17 @@ export function useEmployeeAttendance() {
   }, []);
 
   const isLoading = profileLoading || scheduleLoading || attendanceLoading;
-  const canClockIn = todaySchedule && !todayAttendance;
-  // const canClockOut = todayAttendance && !todayAttendance.clockOut;
   const canClockOut = !!(todayAttendance && !todayAttendance.clockOut);
+  const canClockIn = !todayAttendance && !!todaySchedule;
   const isSubmitting = clockInMutation.isPending || clockOutMutation.isPending;
   const isReadyToSubmit =
     geolocation.latitude !== null && camera.photo !== null;
+
+  console.log("DEBUG SHIFT:", {
+    todayAttendance,
+    canClockOut,
+    todaySchedule: !!todaySchedule,
+  });
 
   return {
     user,

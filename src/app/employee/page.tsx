@@ -61,7 +61,7 @@ export default function EmployeePage() {
           <AttendanceActions
             canClockIn={!!canClockIn}
             canClockOut={!!canClockOut}
-            hasSchedule={!!todaySchedule}
+            hasSchedule={!!todaySchedule || !!canClockOut}
             onStartAttendance={startAttendance}
           />
         </main>
