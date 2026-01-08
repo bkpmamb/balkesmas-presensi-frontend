@@ -2,18 +2,19 @@
 
 "use client";
 
-import { RefObject } from "react";
+import { RefObject, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Camera,
+  Camera as CameraIcon,
   X,
   RefreshCw,
   MapPin,
   Loader2,
   AlertCircle,
   Send,
+  User,
 } from "lucide-react";
 import Image from "next/image";
 import type {
@@ -49,10 +50,119 @@ export function AttendanceCamera({
   onCancel,
   onRefreshLocation,
 }: AttendanceCameraProps) {
+  // ✅ ALL HOOKS MUST BE AT THE TOP - before any conditions
+  const [faceDetected, setFaceDetected] = useState(false);
+  const [faceDetectionReady, setFaceDetectionReady] = useState(false);
+  const [faceDetectionLoading, setFaceDetectionLoading] = useState(true);
+
+  // Face detection using MediaPipe
+  useEffect(() => {
+    // Skip if no action, camera not open, or photo already taken
+    if (!action || !camera.isOpen || camera.photo) {
+      setFaceDetected(false);
+      setFaceDetectionReady(false);
+      setFaceDetectionLoading(true);
+      return;
+    }
+
+    if (!videoRef.current) return;
+
+    let faceDetection:
+      | import("@mediapipe/face_detection").FaceDetection
+      | null = null;
+    let animationFrameId: number | null = null;
+    let isRunning = true;
+
+    const initFaceDetection = async () => {
+      try {
+        // Dynamic import MediaPipe
+        const { FaceDetection } = await import("@mediapipe/face_detection");
+
+        if (!isRunning) return;
+
+        faceDetection = new FaceDetection({
+          locateFile: (file) =>
+            `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`,
+        });
+
+        faceDetection.setOptions({
+          model: "short", // 'short' is faster, 'full' is more accurate
+          minDetectionConfidence: 0.5,
+        });
+
+        faceDetection.onResults((results) => {
+          if (!isRunning) return;
+          const detected = results.detections && results.detections.length > 0;
+          setFaceDetected(detected);
+          setFaceDetectionReady(true);
+          setFaceDetectionLoading(false);
+        });
+
+        // Detection loop
+        const detectFace = async () => {
+          if (!isRunning || !faceDetection || !videoRef.current) return;
+
+          if (videoRef.current.readyState >= 2) {
+            try {
+              await faceDetection.send({ image: videoRef.current });
+            } catch (error) {
+              console.error("Face detection error:", error);
+            }
+          }
+
+          if (isRunning) {
+            animationFrameId = requestAnimationFrame(detectFace);
+          }
+        };
+
+        // Wait for video to be ready
+        const video = videoRef.current;
+        if (video) {
+          const handleVideoReady = () => {
+            if (isRunning) {
+              detectFace();
+            }
+          };
+
+          if (video.readyState >= 2) {
+            handleVideoReady();
+          } else {
+            video.addEventListener("loadeddata", handleVideoReady, {
+              once: true,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Failed to initialize face detection:", error);
+        setFaceDetectionLoading(false);
+        setFaceDetectionReady(true);
+        // If face detection fails, allow capture anyway
+        setFaceDetected(true);
+      }
+    };
+
+    initFaceDetection();
+
+    // Cleanup
+    return () => {
+      isRunning = false;
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      if (faceDetection) {
+        faceDetection.close();
+      }
+      setFaceDetected(false);
+      setFaceDetectionReady(false);
+      setFaceDetectionLoading(true);
+    };
+  }, [action, camera.isOpen, camera.photo, videoRef]);
+
+  // ✅ EARLY RETURN AFTER ALL HOOKS
   if (!action) return null;
 
   const actionLabel = action === "clock-in" ? "Clock In" : "Clock Out";
-  // const actionColor = action === "clock-in" ? "green" : "blue";
+  const canCapture = faceDetectionReady && faceDetected;
 
   return (
     <AnimatePresence>
@@ -80,6 +190,7 @@ export function AttendanceCamera({
                 <X className="h-5 w-5" />
               </Button>
             </CardHeader>
+
             <CardContent className="space-y-4">
               {/* Location Status */}
               <div className="bg-gray-50 rounded-lg p-3">
@@ -101,6 +212,7 @@ export function AttendanceCamera({
                     />
                   </Button>
                 </div>
+
                 {geolocation.error ? (
                   <div className="flex items-center space-x-2 mt-2 text-red-600">
                     <AlertCircle className="h-4 w-4" />
@@ -111,24 +223,82 @@ export function AttendanceCamera({
                     ✓ Lokasi berhasil didapatkan
                   </p>
                 ) : (
-                  <p className="text-sm text-gray-500 mt-1">
-                    Mendapatkan lokasi...
-                  </p>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Loader2 className="h-3 w-3 animate-spin text-gray-500" />
+                    <p className="text-sm text-gray-500">
+                      Mendapatkan lokasi...
+                    </p>
+                  </div>
                 )}
               </div>
+
+              {/* Face Detection Status */}
+              {camera.isOpen && !camera.photo && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="flex items-center space-x-2">
+                    <User className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-600">Deteksi Wajah</span>
+                  </div>
+
+                  {faceDetectionLoading ? (
+                    <div className="flex items-center space-x-2 mt-1">
+                      <Loader2 className="h-3 w-3 animate-spin text-gray-500" />
+                      <p className="text-sm text-gray-500">
+                        Memuat sistem deteksi wajah...
+                      </p>
+                    </div>
+                  ) : faceDetected ? (
+                    <p className="text-sm text-green-600 mt-1">
+                      ✓ Wajah terdeteksi
+                    </p>
+                  ) : (
+                    <p className="text-sm text-orange-600 mt-1">
+                      ⚠ Arahkan wajah Anda ke kamera
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Camera / Photo Preview */}
               <div className="relative aspect-4/3 bg-black rounded-lg overflow-hidden">
                 {camera.isOpen && !camera.photo && (
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover bg-black"
-                    style={{ minHeight: "100%" }}
-                  />
+                  <>
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover"
+                    />
+
+                    {/* Face Detection Overlay */}
+                    {faceDetectionReady && !faceDetected && (
+                      <div className="absolute inset-0 border-4 border-orange-500 rounded-lg pointer-events-none">
+                        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                          Wajah tidak terdeteksi
+                        </div>
+                      </div>
+                    )}
+
+                    {faceDetectionReady && faceDetected && (
+                      <div className="absolute inset-0 border-4 border-green-500 rounded-lg pointer-events-none">
+                        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                          Wajah terdeteksi ✓
+                        </div>
+                      </div>
+                    )}
+
+                    {faceDetectionLoading && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                        <div className="text-center text-white">
+                          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+                          <p className="text-sm">Memuat deteksi wajah...</p>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
+
                 {camera.photo && (
                   <Image
                     src={camera.photo}
@@ -138,6 +308,7 @@ export function AttendanceCamera({
                     className="object-cover"
                   />
                 )}
+
                 {camera.error && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
                     <div className="text-center p-4">
@@ -150,9 +321,14 @@ export function AttendanceCamera({
 
               {/* Camera Actions */}
               {camera.isOpen && !camera.photo && (
-                <Button className="w-full" size="lg" onClick={onCapture}>
-                  <Camera className="mr-2 h-5 w-5" />
-                  Ambil Foto
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={onCapture}
+                  disabled={!canCapture}
+                >
+                  <CameraIcon className="mr-2 h-5 w-5" />
+                  {canCapture ? "Ambil Foto" : "Arahkan Wajah ke Kamera"}
                 </Button>
               )}
 
@@ -166,19 +342,15 @@ export function AttendanceCamera({
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Ulangi
                   </Button>
+
                   <Button
                     onClick={onSubmit}
-                    disabled={!isReadyToSubmit || isSubmitting} // Disable jika belum siap atau sedang kirim
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white relative"
+                    disabled={!isReadyToSubmit || isSubmitting}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     {isSubmitting ? (
                       <>
-                        <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
-                          <Loader2 className="h-10 w-10 text-blue-600 animate-spin mb-2" />
-                          <p className="text-sm font-bold text-slate-700">
-                            Menempelkan Watermark & Mengirim...
-                          </p>
-                        </div>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Memproses...
                       </>
                     ) : (
@@ -188,6 +360,19 @@ export function AttendanceCamera({
                       </>
                     )}
                   </Button>
+                </div>
+              )}
+
+              {/* Submitting Overlay */}
+              {isSubmitting && camera.photo && (
+                <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg">
+                  <Loader2 className="h-12 w-12 text-blue-600 animate-spin mb-3" />
+                  <p className="text-sm font-semibold text-gray-700">
+                    Menempelkan Watermark...
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Mohon tunggu sebentar
+                  </p>
                 </div>
               )}
             </CardContent>
