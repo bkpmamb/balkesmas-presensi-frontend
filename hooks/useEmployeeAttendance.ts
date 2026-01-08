@@ -297,6 +297,19 @@ export function useEmployeeAttendance() {
     router.push("/login");
   }, [logout, router]);
 
+  const parseShiftTimeToday = (time: string) => {
+    const [hour, minute] = time.split(":").map(Number);
+    const date = new Date();
+    date.setHours(hour, minute, 0, 0);
+    return date;
+  };
+
+  const now = new Date();
+
+  const shiftEndTime = todaySchedule
+    ? parseShiftTimeToday(todaySchedule.shift.endTime)
+    : null;
+
   useEffect(() => {
     return () => {
       if (streamRef.current)
@@ -306,8 +319,12 @@ export function useEmployeeAttendance() {
 
   const isLoading = profileLoading || scheduleLoading || attendanceLoading;
   const canClockOut = Boolean(
-    todayAttendance && todayAttendance.clockOut === null
+    todayAttendance?.clockIn &&
+      !todayAttendance?.clockOut &&
+      shiftEndTime &&
+      now >= shiftEndTime
   );
+
   const canClockIn = !todayAttendance && !!todaySchedule;
   const isSubmitting = clockInMutation.isPending || clockOutMutation.isPending;
   const isReadyToSubmit =
