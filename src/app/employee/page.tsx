@@ -48,6 +48,7 @@ export default function EmployeePage() {
         variants={attendanceAnimations.container}
         initial="hidden"
         animate="visible"
+        key="employee-page"
       >
         <EmployeeHeader profile={profile} onLogout={handleLogout} />
 

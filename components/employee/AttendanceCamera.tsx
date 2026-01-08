@@ -134,6 +134,7 @@ export function AttendanceCamera({
                     src={camera.photo}
                     alt="Preview"
                     fill
+                    priority
                     className="object-cover"
                   />
                 )}

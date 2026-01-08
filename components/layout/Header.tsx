@@ -24,7 +24,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       </Button>
       <div className="flex items-center space-x-4">
         <h2 className="text-xl font-semibold text-gray-900">
-          Selamat datang, {user?.name}! 👋
+          Selamat datang, {user?.name}!
         </h2>
       </div>
 

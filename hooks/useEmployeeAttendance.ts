@@ -313,11 +313,13 @@ export function useEmployeeAttendance() {
   const isReadyToSubmit =
     geolocation.latitude !== null && camera.photo !== null;
 
-  console.log("DEBUG SHIFT:", {
-    todayAttendance,
-    canClockOut,
-    todaySchedule: !!todaySchedule,
-  });
+  useEffect(() => {
+    console.log("DEBUG SHIFT:", {
+      todayAttendance,
+      canClockOut,
+      todaySchedule: !!todaySchedule,
+    });
+  }, [todayAttendance, canClockOut, todaySchedule]);
 
   return {
     user,
