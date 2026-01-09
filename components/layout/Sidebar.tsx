@@ -79,7 +79,6 @@ export function Sidebar({ onClose }: SidebarProps) {
               fill
               className="rounded-md object-cover"
               sizes="40px"
-              priority
             />
           </div>
           <div>

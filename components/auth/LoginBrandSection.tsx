@@ -23,7 +23,6 @@ export function LoginBrandSection() {
           alt="PT. Arta Surya Perkasa"
           fill
           className="object-contain drop-shadow-2xl relative z-10"
-          priority
         />
       </motion.div>
 

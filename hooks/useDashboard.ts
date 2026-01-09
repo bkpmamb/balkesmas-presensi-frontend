@@ -62,6 +62,8 @@ export function useDashboard() {
   const { data: monthlyStats } = useQuery({
     queryKey: ["monthly-stats"],
     queryFn: () => dashboardApi.getMonthlyStats(),
+    staleTime: 60000,
+    gcTime: 300000,
   });
 
   useEffect(() => {
