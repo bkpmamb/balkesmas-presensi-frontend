@@ -1,5 +1,6 @@
 // src/lib/api/settings.ts
 
+import axios from "axios";
 import apiClient from "./client";
 import type {
   Settings,
@@ -29,7 +30,9 @@ export const settingsApi = {
 
   // Categories
   getCategories: async (): Promise<Category[]> => {
-    const { data } = await apiClient.get<CategoriesResponse>("/admin/categories/list");
+    const { data } = await apiClient.get<CategoriesResponse>(
+      "/admin/categories/list"
+    );
     return data.data;
   },
 
@@ -53,6 +56,14 @@ export const settingsApi = {
   },
 
   deleteCategory: async (id: string): Promise<void> => {
-    await apiClient.delete(`/admin/categories/${id}`);
+    try {
+      await apiClient.delete(`/admin/categories/${id}`);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const serverMessage = error.response?.data?.message;
+        throw new Error(serverMessage || "Gagal menghapus kategori");
+      }
+      throw new Error("Terjadi kesalahan sistem");
+    }
   },
 };

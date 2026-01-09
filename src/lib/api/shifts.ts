@@ -1,5 +1,6 @@
 // src/lib/api/shifts.ts
 
+import axios from "axios";
 import apiClient from "./client";
 import type {
   Shift,
@@ -57,7 +58,15 @@ export const shiftsApi = {
 
   // Delete shift
   delete: async (id: string): Promise<void> => {
-    await apiClient.delete(`/admin/shifts/${id}`);
+    try {
+      await apiClient.delete(`/admin/shifts/${id}`);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const serverMessage = error.response?.data?.message;
+        throw new Error(serverMessage || "Gagal menghapus shift");
+      }
+      throw new Error("Terjadi kesalahan sistem");
+    }
   },
 
   // Get schedules by shift

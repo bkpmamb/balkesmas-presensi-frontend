@@ -1,5 +1,6 @@
 // src/lib/api/employees.ts
 
+import axios from "axios";
 import apiClient from "./client";
 import type {
   Employee,
@@ -66,7 +67,15 @@ export const employeesApi = {
 
   // Delete employee
   delete: async (id: string): Promise<void> => {
-    await apiClient.delete(`/admin/employees/${id}`);
+    try {
+      await apiClient.delete(`/admin/employees/${id}`);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const serverMessage = error.response?.data?.message;
+        throw new Error(serverMessage || "Gagal menghapus karyawan");
+      }
+      throw new Error("Terjadi kesalahan sistem");
+    }
   },
 
   // Get categories
