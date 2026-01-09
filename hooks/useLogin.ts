@@ -25,10 +25,21 @@ export function useLogin() {
     password: "",
   });
 
-  // Ambil reason dan pastikan tipenya aman
-  const rawReason = searchParams.get("reason");
-  const reason: LoginReason =
-    rawReason === "timeout" || rawReason === "unauthorized" ? rawReason : null;
+  useEffect(() => {
+    const timer = createTimer("LOGIN_PAGE_LOAD");
+    timer.lap("Login hook initialized");
+
+    // Warm up backend
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+    fetch(`${apiUrl}/health`)
+      .then((res) => res.json())
+      .then(() => timer.lap("Backend health check OK"))
+      .catch(() => timer.lap("Backend warming up..."));
+
+    return () => {
+      timer.stop("Login page unmounted");
+    };
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -37,6 +48,11 @@ export function useLogin() {
       router.replace(path);
     }
   }, [isAuthenticated, user, router]);
+
+  // Ambil reason dan pastikan tipenya aman
+  const rawReason = searchParams.get("reason");
+  const reason: LoginReason =
+    rawReason === "timeout" || rawReason === "unauthorized" ? rawReason : null;
 
   const handleInputChange = (field: keyof LoginFormData, value: string) => {
     if (error) setError(""); // Hapus error saat user mulai mengetik ulang

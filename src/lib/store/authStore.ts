@@ -5,6 +5,7 @@ import { authApi } from "../api/auth";
 import type { AuthState, User } from "@/lib/types/auth";
 import type { ApiError } from "@/lib/types/api";
 import { toast } from "sonner";
+import { createTimer } from "@/src/lib/utils/logger";
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -35,10 +36,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   login: async (username: string, password: string) => {
-    try {
-      const response = await authApi.login({ username, password });
+    const timer = createTimer("AUTH_STORE_LOGIN");
 
-      // console.log("🔍 Processing login response:", response);
+    try {
+      timer.lap("Calling API /auth/login");
+      const response = await authApi.login({ username, password });
+      timer.lap("API response received");
 
       // ✅ Create user object
       const user: User = {
@@ -58,21 +61,25 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
       // ✅ STRATEGI PENYIMPANAN BERDASARKAN ROLE
       if (user.role === "admin") {
+        timer.lap("Storing admin token in sessionStorage");
         sessionStorage.setItem("token", token);
         localStorage.removeItem("token"); // Bersihkan jika ada bekas employee
-        // console.log("🛡️ Admin detected: Saving token to sessionStorage");
       } else {
+        timer.lap("Storing employee token in localStorage");
         localStorage.setItem("token", token);
         sessionStorage.removeItem("token"); // Bersihkan jika ada bekas admin
-        // console.log("🏠 Employee detected: Saving token to localStorage");
       }
 
-      // Simpan data profil tetap di localStorage agar UI tidak kosong saat refresh
+      timer.lap("Storing user data");
       localStorage.setItem("user", JSON.stringify(user));
 
+      timer.lap("Updating store state");
       set({ token, user, isAuthenticated: true });
+
+      timer.stop("Auth store login complete");
       toast.success("Login berhasil!");
     } catch (error) {
+      timer.stop("Auth store login failed");
       const apiError = error as ApiError;
       toast.error(apiError.message || "Login gagal");
       throw error;

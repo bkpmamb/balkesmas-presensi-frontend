@@ -2,7 +2,7 @@
 
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   LoginBackground,
@@ -11,8 +11,19 @@ import {
 } from "@/components/auth";
 import { useLogin } from "@/hooks/useLogin";
 import { loginAnimations } from "@/config/login.config";
+import { createTimer } from "@/src/lib/utils/logger";
 
 function LoginContent() {
+  const timerRef = useRef(createTimer("LOGIN_PAGE_RENDER"));
+
+  useEffect(() => {
+    const timer = timerRef.current;
+    timer.lap("LoginContent mounted");
+
+    return () => {
+      timer.stop("LoginContent unmounted");
+    };
+  }, []);
   const { formData, loading, error, reason, handleInputChange, handleSubmit } =
     useLogin();
 
@@ -41,15 +52,25 @@ function LoginContent() {
   );
 }
 
-export default function LoginPage() {
+function LoginFallback() {
+  useEffect(() => {
+    console.log("[LOGIN_PAGE] Suspense fallback showing...");
+  }, []);
+
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
-        </div>
-      }
-    >
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  useEffect(() => {
+    const timer = createTimer("LOGIN_PAGE_INIT");
+    timer.stop("Suspense boundary ready");
+  }, []);
+  return (
+    <Suspense fallback={<LoginFallback />}>
       <LoginContent />
     </Suspense>
   );
