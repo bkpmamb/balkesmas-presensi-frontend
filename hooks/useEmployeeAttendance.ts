@@ -6,15 +6,15 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuthStore } from "@/src/lib/store/authStore";
 import { employeeAttendanceApi } from "@/src/lib/api/employee-attendance";
+import { createTimer } from "@/src/lib/utils/logger";
 import type { ApiError } from "@/lib/types/api";
 import type {
   GeolocationState,
   CameraState,
   AttendanceAction,
 } from "@/lib/types/employee-attendance";
-import { getAddressFromCoords } from "@/src/lib/utils/geocoding"; // Import helper baru
+import { getAddressFromCoords } from "@/src/lib/utils/geocoding";
 
-// Pastikan GeolocationState di types mendukung field 'address'
 interface ExtendedGeolocationState extends GeolocationState {
   address: string | null;
 }
@@ -83,35 +83,36 @@ export function useEmployeeAttendance() {
     }
   }, [attachStream]);
 
-  // --- FETCHING DATA ---
-  const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ["employee-profile"],
-    queryFn: employeeAttendanceApi.getProfile,
-  });
-
-  const { data: todaySchedule, isLoading: scheduleLoading } = useQuery({
-    queryKey: ["today-schedule"],
-    queryFn: employeeAttendanceApi.getTodaySchedule,
-  });
-
-  const ATTENDANCE_KEY = ["today-attendance"];
-
-  const { data: todayAttendance, isLoading: attendanceLoading } = useQuery({
-    // queryKey: ["today-attendance", new Date().getDate()],
-    // queryKey: ["today-attendance", user?._id],
-    queryKey: ATTENDANCE_KEY,
-    queryFn: employeeAttendanceApi.getTodayAttendance,
+  // ✅ Single query untuk semua data
+  const { data: initData, isLoading } = useQuery({
+    queryKey: ["employee-init"],
+    queryFn: async () => {
+      const timer = createTimer("FETCH_EMPLOYEE_INIT");
+      try {
+        const result = await employeeAttendanceApi.getInit();
+        timer.stop("Employee init fetched successfully");
+        return result;
+      } catch (error) {
+        timer.stop("Employee init fetch failed");
+        throw error;
+      }
+    },
     staleTime: 0,
     refetchOnMount: "always",
     gcTime: 0,
     refetchOnWindowFocus: true,
   });
 
+  // ✅ Extract data dari single response
+  const profile = initData?.profile ?? null;
+  const todaySchedule = initData?.schedule ?? null;
+  const todayAttendance = initData?.attendance ?? null;
+
   // --- MUTATIONS ---
   const clockInMutation = useMutation({
     mutationFn: employeeAttendanceApi.clockIn,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ATTENDANCE_KEY });
+      queryClient.invalidateQueries({ queryKey: ["employee-init"] });
       toast.success(data.message);
       resetState();
     },
@@ -122,7 +123,7 @@ export function useEmployeeAttendance() {
   const clockOutMutation = useMutation({
     mutationFn: employeeAttendanceApi.clockOut,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ATTENDANCE_KEY });
+      queryClient.invalidateQueries({ queryKey: ["employee-init"] });
       toast.success(data.message);
       resetState();
     },
@@ -147,7 +148,6 @@ export function useEmployeeAttendance() {
       (position) => {
         const { latitude, longitude } = position.coords;
 
-        // Dapatkan Alamat secara Async tanpa memblokir state koordinat
         getAddressFromCoords(latitude, longitude).then((addr) => {
           setGeolocation({
             latitude,
@@ -180,7 +180,6 @@ export function useEmployeeAttendance() {
   }, []);
 
   const capturePhoto = useCallback(() => {
-    // Pastikan videoRef ada dan sedang memutar stream
     if (!videoRef.current || videoRef.current.readyState < 2) {
       toast.error("Kamera belum siap, silakan tunggu sebentar.");
       return;
@@ -189,27 +188,21 @@ export function useEmployeeAttendance() {
     const video = videoRef.current;
     const canvas = document.createElement("canvas");
 
-    // 1. Ambil resolusi asli dari stream video
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
     const ctx = canvas.getContext("2d");
     if (ctx) {
       try {
-        // 2. Gambar ke canvas TERLEBIH DAHULU
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        // 3. Konversi ke base64 (simpan ke state)
         const photoData = canvas.toDataURL("image/jpeg", 0.8);
 
-        // 4. Update state: Set foto dan tutup jendela kamera
         setCamera((prev) => ({
           ...prev,
           photo: photoData,
-          isOpen: false, // Jendela kamera di UI ditutup
+          isOpen: false,
         }));
 
-        // 5. BARU matikan stream kamera (Penting: urutan ini krusial)
         if (streamRef.current) {
           streamRef.current.getTracks().forEach((track) => track.stop());
           streamRef.current = null;
@@ -222,7 +215,7 @@ export function useEmployeeAttendance() {
         }));
       }
     }
-  }, []); // Hapus closeCamera dari dependency jika itu menyebabkan re-render
+  }, []);
 
   const retakePhoto = useCallback(() => {
     setCamera((prev) => ({ ...prev, photo: null }));
@@ -250,7 +243,7 @@ export function useEmployeeAttendance() {
     [getCurrentLocation, openCamera]
   );
 
-  // --- SUBMIT DENGAN WATERMARK FRONTEND ---
+  // --- SUBMIT ---
   const submitAttendance = useCallback(async () => {
     if (!geolocation.latitude || !geolocation.longitude || !camera.photo) {
       toast.error("Lokasi dan foto wajib diisi");
@@ -258,7 +251,6 @@ export function useEmployeeAttendance() {
     }
 
     try {
-      // 1. Convert capture ke File
       const response = await fetch(camera.photo);
       const originalBlob = await response.blob();
 
@@ -266,14 +258,12 @@ export function useEmployeeAttendance() {
         type: "image/jpeg",
       });
 
-      // 2. Prepare FormData (foto asli)
       const formData = new FormData();
       formData.append("latitude", geolocation.latitude.toString());
       formData.append("longitude", geolocation.longitude.toString());
       formData.append("address", geolocation.address || "");
       formData.append("image", originalFile);
 
-      // 3. Submit
       if (currentAction === "clock-in") {
         await clockInMutation.mutateAsync(formData);
       } else {
@@ -283,11 +273,9 @@ export function useEmployeeAttendance() {
       console.error("Submit Attendance Error:", err);
       const apiError = err as ApiError;
 
-      // Cek apakah ada message dari backend
       if (apiError?.message) {
         toast.error(apiError.message);
       } else if (apiError?.response?.data?.message) {
-        // Jika error dari axios
         toast.error(apiError.response.data.message);
       } else {
         toast.error("Gagal memproses presensi. Silakan coba lagi.");
@@ -306,19 +294,7 @@ export function useEmployeeAttendance() {
     router.push("/login");
   }, [logout, router]);
 
-  // const parseShiftTimeToday = (time: string) => {
-  //   const [hour, minute] = time.split(":").map(Number);
-  //   const date = new Date();
-  //   date.setHours(hour, minute, 0, 0);
-  //   return date;
-  // };
-
-  // const now = new Date();
-
-  // const shiftEndTime = todaySchedule
-  //   ? parseShiftTimeToday(todaySchedule.shift.endTime)
-  //   : null;
-
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (streamRef.current)
@@ -326,26 +302,31 @@ export function useEmployeeAttendance() {
     };
   }, []);
 
-  const isLoading = profileLoading || scheduleLoading || attendanceLoading;
+  // ✅ Computed values
+  const canClockIn = Boolean(
+    !todayAttendance && todaySchedule && todaySchedule.canClockInNow
+  );
+
   const canClockOut = Boolean(
     todayAttendance?.clockIn &&
       !todayAttendance?.clockOut &&
       todayAttendance?.canClockOutNow
   );
-  const canClockIn = Boolean(
-    !todayAttendance && todaySchedule && todaySchedule.canClockInNow
-  );
+
   const isSubmitting = clockInMutation.isPending || clockOutMutation.isPending;
   const isReadyToSubmit =
     geolocation.latitude !== null && camera.photo !== null;
 
+  // Debug log
   useEffect(() => {
-    console.log("DEBUG SHIFT:", {
-      todayAttendance,
+    console.log("DEBUG EMPLOYEE:", {
+      profile: profile ?? undefined,
+      todaySchedule: todaySchedule?.shift?.name,
+      todayAttendance: todayAttendance?._id,
+      canClockIn,
       canClockOut,
-      todaySchedule: !!todaySchedule,
     });
-  }, [todayAttendance, canClockOut, todaySchedule]);
+  }, [profile, todaySchedule, todayAttendance, canClockIn, canClockOut]);
 
   return {
     user,

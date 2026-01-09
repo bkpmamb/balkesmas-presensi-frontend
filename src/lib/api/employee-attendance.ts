@@ -14,6 +14,7 @@ import type {
   // PaginationData,
   AttendanceHistoryResponse,
   WorkSchedule,
+  EmployeeInitResponse,
 } from "@/lib/types/employee-attendance";
 
 export const employeeAttendanceApi = {
@@ -112,5 +113,13 @@ export const employeeAttendanceApi = {
       passwords
     );
     return data;
+  },
+
+  getInit: async (): Promise<EmployeeInitResponse> => {
+    const { data } = await apiClient.get<{
+      success: boolean;
+      data: EmployeeInitResponse;
+    }>("/employee/init");
+    return data.data;
   },
 };

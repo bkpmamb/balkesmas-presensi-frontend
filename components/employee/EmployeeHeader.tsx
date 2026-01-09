@@ -19,7 +19,7 @@ import type { EmployeeProfile } from "@/lib/types/employee-attendance";
 import Link from "next/link";
 
 interface EmployeeHeaderProps {
-  profile: EmployeeProfile | undefined;
+  profile?: EmployeeProfile | null;
   onLogout: () => void;
 }
 

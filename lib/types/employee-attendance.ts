@@ -179,4 +179,10 @@ export interface WorkSchedule {
   isActive: boolean;
 }
 
+export interface EmployeeInitResponse {
+  profile: EmployeeProfile;
+  schedule: TodaySchedule | null;
+  attendance: TodayAttendance | null;
+}
+
 export type AttendanceAction = "clock-in" | "clock-out" | null;

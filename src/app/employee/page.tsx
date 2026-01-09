@@ -1,19 +1,24 @@
 // src/app/employee/page.tsx
-
 "use client";
 
+import { lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import {
   EmployeeHeader,
   EmployeeGreeting,
+  EmployeeSkeleton,
   ScheduleCard,
   AttendanceStatus,
   AttendanceActions,
-  AttendanceCamera,
-  EmployeeSkeleton,
 } from "@/components/employee";
 import { useEmployeeAttendance } from "@/hooks/useEmployeeAttendance";
 import { attendanceAnimations } from "@/config/employee.config";
+
+const AttendanceCamera = lazy(() =>
+  import("@/components/employee").then((mod) => ({
+    default: mod.AttendanceCamera,
+  }))
+);
 
 export default function EmployeePage() {
   const {
@@ -38,6 +43,7 @@ export default function EmployeePage() {
     handleLogout,
   } = useEmployeeAttendance();
 
+  // 3. Pastikan isLoading mencakup validasi data krusial
   if (isLoading) {
     return <EmployeeSkeleton />;
   }
@@ -50,11 +56,15 @@ export default function EmployeePage() {
         animate="visible"
         key="employee-page"
       >
-        <EmployeeHeader profile={profile} onLogout={handleLogout} />
+        <EmployeeHeader
+          profile={profile ?? undefined}
+          onLogout={handleLogout}
+        />
 
         <main className="container mx-auto px-4 py-6 space-y-6 max-w-lg">
           <EmployeeGreeting name={profile?.name} />
 
+          {/* Tanpa Suspense untuk komponen utama agar lebih instan */}
           <ScheduleCard schedule={todaySchedule} />
 
           <AttendanceStatus attendance={todayAttendance} />
@@ -69,19 +79,29 @@ export default function EmployeePage() {
           />
         </main>
 
-        <AttendanceCamera
-          action={currentAction}
-          geolocation={geolocation}
-          camera={camera}
-          videoRef={videoRef}
-          isSubmitting={isSubmitting}
-          isReadyToSubmit={isReadyToSubmit}
-          onCapture={capturePhoto}
-          onRetake={retakePhoto}
-          onSubmit={submitAttendance}
-          onCancel={resetState}
-          onRefreshLocation={getCurrentLocation}
-        />
+        {currentAction && (
+          <Suspense
+            fallback={
+              <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center text-white">
+                Loading Camera...
+              </div>
+            }
+          >
+            <AttendanceCamera
+              action={currentAction}
+              geolocation={geolocation}
+              camera={camera}
+              videoRef={videoRef}
+              isSubmitting={isSubmitting}
+              isReadyToSubmit={isReadyToSubmit}
+              onCapture={capturePhoto}
+              onRetake={retakePhoto}
+              onSubmit={submitAttendance}
+              onCancel={resetState}
+              onRefreshLocation={getCurrentLocation}
+            />
+          </Suspense>
+        )}
       </motion.div>
     </div>
   );
