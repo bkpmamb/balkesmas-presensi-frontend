@@ -38,7 +38,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const response = await authApi.login({ username, password });
 
-      console.log("🔍 Processing login response:", response);
+      // console.log("🔍 Processing login response:", response);
 
       // ✅ Create user object
       const user: User = {
@@ -60,11 +60,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (user.role === "admin") {
         sessionStorage.setItem("token", token);
         localStorage.removeItem("token"); // Bersihkan jika ada bekas employee
-        console.log("🛡️ Admin detected: Saving token to sessionStorage");
+        // console.log("🛡️ Admin detected: Saving token to sessionStorage");
       } else {
         localStorage.setItem("token", token);
         sessionStorage.removeItem("token"); // Bersihkan jika ada bekas admin
-        console.log("🏠 Employee detected: Saving token to localStorage");
+        // console.log("🏠 Employee detected: Saving token to localStorage");
       }
 
       // Simpan data profil tetap di localStorage agar UI tidak kosong saat refresh

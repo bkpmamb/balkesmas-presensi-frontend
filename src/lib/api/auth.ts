@@ -19,7 +19,7 @@ export interface LoginResponse {
 
 export const authApi = {
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
-    console.log("🔑 Calling login API with:", credentials.username);
+    // console.log("🔑 Calling login API with:", credentials.username);
 
     try {
       const { data } = await apiClient.post<LoginResponse>(
@@ -27,8 +27,8 @@ export const authApi = {
         credentials
       );
 
-      console.log("✅ Login API Response:", data);
-      console.log("📦 Response structure:", JSON.stringify(data, null, 2)); // ✅ Full debug
+      // console.log("✅ Login API Response:", data);
+      // console.log("📦 Response structure:", JSON.stringify(data, null, 2)); g
 
       return data;
     } catch (error) {

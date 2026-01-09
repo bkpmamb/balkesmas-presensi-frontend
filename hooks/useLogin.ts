@@ -1,9 +1,10 @@
 // hooks/useLogin.ts
 
+import axios from "axios";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/src/lib/store/authStore";
-import axios from "axios";
+import { createTimer } from "@/src/lib/utils/logger";
 
 interface LoginFormData {
   username: string;
@@ -31,6 +32,7 @@ export function useLogin() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
+      console.log("[HOOK_LOG] User authenticated, redirecting...");
       const path = user.role === "admin" ? "/dashboard" : "/employee";
       router.replace(path);
     }
@@ -45,13 +47,21 @@ export function useLogin() {
     e.preventDefault();
     if (loading) return;
 
+    const timer = createTimer("HOOK_LOGIN_PROCESS");
+
     setLoading(true);
     setError("");
 
     try {
+      timer.lap("Starting login request via store");
       await login(formData.username, formData.password);
       // Redirect akan ditangani oleh useEffect di atas saat state store berubah
+
+      timer.lap("Login function completed");
+      timer.stop("Login Success Total");
     } catch (err) {
+      timer.lap("Login failed");
+      timer.stop("Login Process Terminated with Error");
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
 
