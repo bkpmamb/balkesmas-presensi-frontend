@@ -161,3 +161,34 @@ export interface AttendanceHistoryResponse {
   data: AttendanceHistoryItem[];
   pagination: AttendancePagination;
 }
+
+export interface ExportFilters {
+  startDate: string;
+  endDate: string;
+  categoryId: string;
+  employeeId: string;
+  shiftId: string;
+  clockInStatus: string;
+  clockOutStatus: string;
+  includePhotos: boolean;
+  sortBy: "date" | "employee" | "shift";
+  sortOrder: "asc" | "desc";
+}
+
+export interface ExportDialogState {
+  isOpen: boolean;
+  format: "excel" | "pdf" | null;
+}
+
+export interface ExportParams {
+  startDate?: string;
+  endDate?: string;
+  categoryId?: string;
+  employeeId?: string;
+  shiftId?: string;
+  clockInStatus?: string;
+  clockOutStatus?: string;
+  includePhotos?: boolean;
+  sortBy?: string;
+  sortOrder?: string;
+}

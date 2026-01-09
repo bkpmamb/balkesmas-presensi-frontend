@@ -15,7 +15,8 @@ import type {
   ManualEntryFormValues,
   AttendanceDialogState,
   AttendanceFilters,
-  ExportParams,
+  ExportFilters,
+  ExportDialogState,
 } from "@/lib/types/attendance";
 
 const initialDialogState: AttendanceDialogState = {
@@ -31,6 +32,11 @@ const initialFilters: AttendanceFilters = {
   clockInStatus: undefined,
 };
 
+const initialExportDialog: ExportDialogState = {
+  isOpen: false,
+  format: null,
+};
+
 export function useAttendances() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
@@ -40,11 +46,13 @@ export function useAttendances() {
   const [selectedAttendance, setSelectedAttendance] =
     useState<Attendance | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [exportDialog, setExportDialog] =
+    useState<ExportDialogState>(initialExportDialog);
 
-  // ✅ Debounce search filter
+  // Debounce search filter
   const debouncedSearch = useDebounce(filters.search, 500);
 
-  // ✅ Memoize filters untuk query - gunakan debouncedSearch
+  // Memoize filters for query
   const queryFilters = useMemo(
     () => ({
       search: debouncedSearch,
@@ -55,7 +63,7 @@ export function useAttendances() {
     [debouncedSearch, filters.startDate, filters.endDate, filters.clockInStatus]
   );
 
-  // Fetch attendances - gunakan queryFilters bukan filters langsung
+  // Fetch attendances
   const { data, isLoading } = useQuery({
     queryKey: ["attendances", page, queryFilters],
     queryFn: () =>
@@ -69,16 +77,22 @@ export function useAttendances() {
       }),
   });
 
-  // Fetch employees for manual entry
+  // Fetch employees for manual entry & export
   const { data: employeesData } = useQuery({
     queryKey: ["employees-all"],
     queryFn: () => employeesApi.getAll({ limit: 100 }),
   });
 
-  // Fetch shifts for manual entry
+  // Fetch shifts for manual entry & export
   const { data: shifts = [] } = useQuery({
     queryKey: ["shifts-all"],
     queryFn: () => shiftsApi.getAllForSelect(),
+  });
+
+  // Fetch categories for export
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories-all"],
+    queryFn: () => employeesApi.getCategories(),
   });
 
   // Create manual entry mutation
@@ -125,19 +139,26 @@ export function useAttendances() {
     }
   };
 
-  // Filter handlers - ✅ Tidak perlu reset page untuk search karena debounce handle itu
+  // Export dialog handlers
+  const openExportDialog = (format?: "excel" | "pdf") => {
+    setExportDialog({ isOpen: true, format: format || null });
+  };
+
+  const closeExportDialog = () => {
+    setExportDialog({ isOpen: false, format: null });
+  };
+
+  // Filter handlers
   const updateFilter = <K extends keyof AttendanceFilters>(
     key: K,
     value: AttendanceFilters[K]
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
-    // Reset page hanya untuk filter non-search (karena search sudah debounced)
     if (key !== "search") {
       setPage(1);
     }
   };
 
-  // ✅ Reset page ketika debounced search berubah
   useMemo(() => {
     if (debouncedSearch !== "") {
       setPage(1);
@@ -179,42 +200,51 @@ export function useAttendances() {
     await deleteMutation.mutateAsync(selectedAttendance._id);
   };
 
-  // Export handlers
-  const getExportParams = (): ExportParams => ({
-    startDate: filters.startDate || undefined,
-    endDate: filters.endDate || undefined,
-    clockInStatus: filters.clockInStatus,
-  });
-
-  const handleExportExcel = async () => {
+  // Export handler with full filters - rename parameter 'format' to 'exportFormat'
+  const handleExport = async (
+    exportFormat: "excel" | "pdf",
+    exportFilters: ExportFilters
+  ) => {
     setExporting(true);
     try {
-      const blob = await attendancesApi.exportExcel(getExportParams());
-      downloadFile(
-        blob,
-        `Laporan_Presensi_${format(new Date(), "yyyyMMdd")}.xlsx`
-      );
-      toast.success("File Excel berhasil diunduh!");
-    } catch (error) {
-      const apiError = error as ApiError;
-      toast.error(apiError.message || "Gagal export ke Excel");
-    } finally {
-      setExporting(false);
-    }
-  };
+      const params = {
+        startDate: exportFilters.startDate || undefined,
+        endDate: exportFilters.endDate || undefined,
+        categoryId: exportFilters.categoryId || undefined,
+        userId: exportFilters.employeeId || undefined,
+        shiftId: exportFilters.shiftId || undefined,
+        clockInStatus: exportFilters.clockInStatus || undefined,
+        clockOutStatus: exportFilters.clockOutStatus || undefined,
+        includePhotos: exportFilters.includePhotos,
+        sortBy: exportFilters.sortBy,
+        sortOrder: exportFilters.sortOrder,
+      };
 
-  const handleExportPDF = async () => {
-    setExporting(true);
-    try {
-      const blob = await attendancesApi.exportPDF(getExportParams());
-      downloadFile(
-        blob,
-        `Laporan_Presensi_${format(new Date(), "yyyyMMdd")}.pdf`
-      );
-      toast.success("File PDF berhasil diunduh!");
+      let blob: Blob;
+      let filename: string;
+
+      if (exportFormat === "excel") {
+        blob = await attendancesApi.exportExcel(params);
+        filename = `Laporan_Presensi_${format(
+          new Date(),
+          "yyyyMMdd_HHmmss"
+        )}.xlsx`;
+      } else {
+        blob = await attendancesApi.exportPDF(params);
+        filename = `Laporan_Presensi_${format(
+          new Date(),
+          "yyyyMMdd_HHmmss"
+        )}.pdf`;
+      }
+
+      downloadFile(blob, filename);
+      toast.success(`File ${exportFormat.toUpperCase()} berhasil diunduh!`);
+      closeExportDialog();
     } catch (error) {
       const apiError = error as ApiError;
-      toast.error(apiError.message || "Gagal export ke PDF");
+      toast.error(
+        apiError.message || `Gagal export ke ${exportFormat.toUpperCase()}`
+      );
     } finally {
       setExporting(false);
     }
@@ -227,6 +257,7 @@ export function useAttendances() {
     summary: data?.summary,
     employees: employeesData?.data ?? [],
     shifts,
+    categories,
     selectedAttendance,
 
     // State
@@ -237,6 +268,7 @@ export function useAttendances() {
     hasActiveFilters,
     isLoading,
     exporting,
+    exportDialog,
 
     // Loading states
     isCreating: createManualEntryMutation.isPending,
@@ -245,6 +277,8 @@ export function useAttendances() {
     // Dialog handlers
     openDialog,
     closeDialog,
+    openExportDialog,
+    closeExportDialog,
 
     // Filter handlers
     updateFilter,
@@ -254,9 +288,8 @@ export function useAttendances() {
     handleManualEntrySubmit,
     handleDelete,
 
-    // Export handlers
-    handleExportExcel,
-    handleExportPDF,
+    // Export handler
+    handleExport,
   };
 }
 
@@ -271,9 +304,3 @@ function downloadFile(blob: Blob, filename: string) {
   window.URL.revokeObjectURL(url);
   document.body.removeChild(a);
 }
-
-export const videoConstraints = {
-  width: { ideal: 720 },
-  height: { ideal: 1280 }, // Sesuai aspek rasio mobile (portrait)
-  facingMode: "user",
-};
