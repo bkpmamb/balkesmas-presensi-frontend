@@ -60,9 +60,11 @@ export default function EmployeePage() {
           <AttendanceStatus attendance={todayAttendance} />
 
           <AttendanceActions
-            canClockIn={!!canClockIn}
-            canClockOut={!!canClockOut}
+            canClockIn={canClockIn}
+            canClockOut={canClockOut}
             hasSchedule={!!todaySchedule || !!canClockOut}
+            todaySchedule={todaySchedule}
+            todayAttendance={todayAttendance}
             onStartAttendance={startAttendance}
           />
         </main>

@@ -8,5 +8,12 @@ export interface ApiErrorResponse {
 export interface ApiError {
   message: string;
   status?: number;
-  data?: ApiErrorResponse;
+  response?: {
+    data?: {
+      success: boolean;
+      message: string;
+      error?: string;
+    };
+    status?: number;
+  };
 }

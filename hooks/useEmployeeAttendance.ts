@@ -280,9 +280,18 @@ export function useEmployeeAttendance() {
         await clockOutMutation.mutateAsync(formData);
       }
     } catch (err) {
-      // Menggunakan 'err' untuk menghilangkan warning ts(6133)
-      console.error("Submit Error detail:", err);
-      toast.error("Gagal memproses gambar.");
+      console.error("Submit Attendance Error:", err);
+      const apiError = err as ApiError;
+
+      // Cek apakah ada message dari backend
+      if (apiError?.message) {
+        toast.error(apiError.message);
+      } else if (apiError?.response?.data?.message) {
+        // Jika error dari axios
+        toast.error(apiError.response.data.message);
+      } else {
+        toast.error("Gagal memproses presensi. Silakan coba lagi.");
+      }
     }
   }, [
     geolocation,
@@ -297,18 +306,18 @@ export function useEmployeeAttendance() {
     router.push("/login");
   }, [logout, router]);
 
-  const parseShiftTimeToday = (time: string) => {
-    const [hour, minute] = time.split(":").map(Number);
-    const date = new Date();
-    date.setHours(hour, minute, 0, 0);
-    return date;
-  };
+  // const parseShiftTimeToday = (time: string) => {
+  //   const [hour, minute] = time.split(":").map(Number);
+  //   const date = new Date();
+  //   date.setHours(hour, minute, 0, 0);
+  //   return date;
+  // };
 
-  const now = new Date();
+  // const now = new Date();
 
-  const shiftEndTime = todaySchedule
-    ? parseShiftTimeToday(todaySchedule.shift.endTime)
-    : null;
+  // const shiftEndTime = todaySchedule
+  //   ? parseShiftTimeToday(todaySchedule.shift.endTime)
+  //   : null;
 
   useEffect(() => {
     return () => {
@@ -321,11 +330,11 @@ export function useEmployeeAttendance() {
   const canClockOut = Boolean(
     todayAttendance?.clockIn &&
       !todayAttendance?.clockOut &&
-      shiftEndTime &&
-      now >= shiftEndTime
+      todayAttendance?.canClockOutNow
   );
-
-  const canClockIn = !todayAttendance && !!todaySchedule;
+  const canClockIn = Boolean(
+    !todayAttendance && todaySchedule && todaySchedule.canClockInNow
+  );
   const isSubmitting = clockInMutation.isPending || clockOutMutation.isPending;
   const isReadyToSubmit =
     geolocation.latitude !== null && camera.photo !== null;

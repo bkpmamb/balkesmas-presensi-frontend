@@ -26,6 +26,9 @@ export interface TodaySchedule {
   };
   dayOfWeek: number;
   isActive: boolean;
+  canClockInNow?: boolean;
+  clockInWindowStart?: string;
+  minutesUntilClockIn?: number | null;
 }
 
 export interface TodayAttendance {
@@ -45,6 +48,9 @@ export interface TodayAttendance {
     startTime: string;
     endTime: string;
   };
+  canClockOutNow?: boolean;
+  onClockIn?: boolean;
+  isOvernightShift?: boolean;
 }
 
 export interface ClockInResponse {
