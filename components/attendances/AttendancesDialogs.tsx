@@ -37,6 +37,7 @@ interface AttendancesDialogsProps {
   shifts: Shift[];
   isCreating: boolean;
   isDeleting: boolean;
+  isLoadingDialogData?: boolean;
   onCloseDialog: (type: keyof AttendanceDialogState) => void;
   onManualEntrySubmit: (data: ManualEntryFormValues) => Promise<void>;
   onDelete: () => Promise<void>;
@@ -47,6 +48,7 @@ export function AttendancesDialogs({
   selectedAttendance,
   isCreating,
   isDeleting,
+  isLoadingDialogData = false,
   onCloseDialog,
   onManualEntrySubmit,
   onDelete,
@@ -65,10 +67,18 @@ export function AttendancesDialogs({
               Isi form di bawah untuk menambahkan presensi manual
             </DialogDescription>
           </DialogHeader>
-          <ManualEntryForm
-            onSubmit={onManualEntrySubmit}
-            isLoading={isCreating}
-          />
+          {isLoadingDialogData ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-muted-foreground">Memuat data...</span>
+            </div>
+          ) : (
+            <ManualEntryForm
+              onSubmit={onManualEntrySubmit}
+              isLoading={isCreating}
+              onCancel={() => onCloseDialog("manualEntry")}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

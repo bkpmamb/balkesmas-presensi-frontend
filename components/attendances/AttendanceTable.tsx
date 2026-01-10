@@ -1,7 +1,6 @@
 // src/components/attendances/AttendanceTable.tsx
 
 "use client";
-
 import { Attendance } from "@/lib/types/attendance";
 import {
   Table,

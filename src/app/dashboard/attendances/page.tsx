@@ -118,6 +118,8 @@ export default function AttendancesPage() {
     exportDialog,
     isCreating,
     isDeleting,
+    isLoadingDialogData,
+    isLoadingExportData,
     openDialog,
     closeDialog,
     openExportDialog,
@@ -217,6 +219,7 @@ export default function AttendancesPage() {
           shifts={shifts}
           isCreating={isCreating}
           isDeleting={isDeleting}
+          isLoadingDialogData={isLoadingDialogData}
           onCloseDialog={closeDialog}
           onManualEntrySubmit={handleManualEntrySubmit}
           onDelete={handleDelete}
@@ -231,6 +234,7 @@ export default function AttendancesPage() {
           categories={categories}
           employees={employees}
           shifts={shifts}
+          isLoadingData={isLoadingExportData}
           exporting={exporting}
           onClose={closeExportDialog}
           onExport={handleExport}

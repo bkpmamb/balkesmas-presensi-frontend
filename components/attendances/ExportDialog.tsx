@@ -61,6 +61,7 @@ interface ExportDialogProps {
   employees: Employee[];
   shifts: Shift[];
   exporting: boolean;
+  isLoadingData?: boolean;
   onClose: () => void;
   onExport: (format: "excel" | "pdf", filters: ExportFilters) => void;
 }
@@ -129,6 +130,7 @@ export function ExportDialog({
   employees,
   shifts,
   exporting,
+  isLoadingData = false,
   onClose,
   onExport,
 }: ExportDialogProps) {
@@ -228,44 +230,52 @@ export function ExportDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs
-          value={selectedFormat}
-          onValueChange={(v) => setSelectedFormat(v as "excel" | "pdf")}
-        >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="excel" className="flex items-center gap-2">
-              <FileSpreadsheet className="h-4 w-4" />
-              Excel
-            </TabsTrigger>
-            <TabsTrigger value="pdf" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              PDF
-            </TabsTrigger>
-          </TabsList>
+        {isLoadingData ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <span className="ml-2 text-muted-foreground">
+              Memuat data filter...
+            </span>
+          </div>
+        ) : (
+          <Tabs
+            value={selectedFormat}
+            onValueChange={(v) => setSelectedFormat(v as "excel" | "pdf")}
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="excel" className="flex items-center gap-2">
+                <FileSpreadsheet className="h-4 w-4" />
+                Excel
+              </TabsTrigger>
+              <TabsTrigger value="pdf" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                PDF
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="excel" className="mt-4">
-            <Card>
-              <CardContent className="pt-4">
-                <p className="text-sm text-muted-foreground">
-                  Export ke format Excel (.xlsx) dengan semua data detail
-                  termasuk perhitungan jam kerja.
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            <TabsContent value="excel" className="mt-4">
+              <Card>
+                <CardContent className="pt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Export ke format Excel (.xlsx) dengan semua data detail
+                    termasuk perhitungan jam kerja.
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          <TabsContent value="pdf" className="mt-4">
-            <Card>
-              <CardContent className="pt-4">
-                <p className="text-sm text-muted-foreground">
-                  Export ke format PDF untuk laporan yang siap cetak dengan
-                  format yang rapi.
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
+            <TabsContent value="pdf" className="mt-4">
+              <Card>
+                <CardContent className="pt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Export ke format PDF untuk laporan yang siap cetak dengan
+                    format yang rapi.
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        )}
         {/* Date Range */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">

@@ -63,7 +63,7 @@ export function useAttendances() {
     [debouncedSearch, filters.startDate, filters.endDate, filters.clockInStatus]
   );
 
-  // Fetch attendances
+  // ✅ MAIN DATA: Fetch attendances (selalu aktif)
   const { data, isLoading } = useQuery({
     queryKey: ["attendances", page, queryFilters],
     queryFn: () =>
@@ -75,24 +75,32 @@ export function useAttendances() {
         endDate: queryFilters.endDate,
         clockInStatus: queryFilters.clockInStatus,
       }),
+    staleTime: 30 * 1000, // ✅ Cache 30 detik
+    refetchOnWindowFocus: false, // ✅ Jangan refetch saat tab focus
   });
 
-  // Fetch employees for manual entry & export
-  const { data: employeesData } = useQuery({
+  // ✅ LAZY LOAD: Fetch employees hanya saat dialog manual entry ATAU export dialog dibuka
+  const { data: employeesData, isLoading: isLoadingEmployees } = useQuery({
     queryKey: ["employees-all"],
     queryFn: () => employeesApi.getAll({ limit: 100 }),
+    enabled: dialogState.manualEntry || exportDialog.isOpen, // ✅ Lazy load
+    staleTime: 5 * 60 * 1000, // ✅ Cache 5 menit
   });
 
-  // Fetch shifts for manual entry & export
-  const { data: shifts = [] } = useQuery({
+  // ✅ LAZY LOAD: Fetch shifts hanya saat dialog manual entry ATAU export dialog dibuka
+  const { data: shifts = [], isLoading: isLoadingShifts } = useQuery({
     queryKey: ["shifts-all"],
     queryFn: () => shiftsApi.getAllForSelect(),
+    enabled: dialogState.manualEntry || exportDialog.isOpen, // ✅ Lazy load
+    staleTime: 5 * 60 * 1000, // ✅ Cache 5 menit
   });
 
-  // Fetch categories for export
-  const { data: categories = [] } = useQuery({
+  // ✅ LAZY LOAD: Fetch categories hanya saat export dialog dibuka
+  const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
     queryKey: ["categories-all"],
     queryFn: () => employeesApi.getCategories(),
+    enabled: exportDialog.isOpen, // ✅ Lazy load - hanya untuk export
+    staleTime: 5 * 60 * 1000, // ✅ Cache 5 menit
   });
 
   // Create manual entry mutation
@@ -264,6 +272,11 @@ export function useAttendances() {
     isLoading,
     exporting,
     exportDialog,
+
+    // Loading states untuk lazy loaded data
+    isLoadingDialogData: isLoadingEmployees || isLoadingShifts,
+    isLoadingExportData:
+      isLoadingEmployees || isLoadingShifts || isLoadingCategories,
 
     // Loading states
     isCreating: createManualEntryMutation.isPending,
