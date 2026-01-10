@@ -1,9 +1,11 @@
 // src/lib/api/attendances.ts
 
+import { getErrorMessage } from "../utils/getErrorMessage";
 import apiClient from "./client";
 import type {
   Attendance,
   AttendancesResponse,
+  ManualEntryAvailableResponse,
   ManualEntryDto,
 } from "@/lib/types/attendance";
 
@@ -54,13 +56,13 @@ export const attendancesApi = {
   },
 
   // Create manual entry
-  createManualEntry: async (entry: ManualEntryDto): Promise<Attendance> => {
-    const { data } = await apiClient.post<{
-      success: boolean;
-      data: Attendance;
-    }>("/admin/attendance/manual-entry", entry);
-    return data.data;
-  },
+  // createManualEntry: async (entry: ManualEntryDto): Promise<Attendance> => {
+  //   const { data } = await apiClient.post<{
+  //     success: boolean;
+  //     data: Attendance;
+  //   }>("/admin/attendance/manual-entry", entry);
+  //   return data.data;
+  // },
 
   // Delete attendance
   delete: async (id: string): Promise<void> => {
@@ -115,5 +117,46 @@ export const attendancesApi = {
       }
     );
     return data;
+  },
+
+  // Get available employees for manual entry
+  getAvailableForManualEntry: async (): Promise<
+    ManualEntryAvailableResponse["data"]
+  > => {
+    try {
+      const { data } = await apiClient.get<ManualEntryAvailableResponse>(
+        "/admin/attendance/manual-entry/available"
+      );
+      return data.data;
+    } catch (error) {
+      throw getErrorMessage(
+        error,
+        "Gagal memuat data karyawan untuk entry manual."
+      );
+    }
+  },
+
+  // Create manual entry (update existing)
+  createManualEntry: async (entry: ManualEntryDto): Promise<Attendance> => {
+    console.log("📡 API createManualEntry - entry received:", entry);
+    console.log("📡 clockIn value:", `"${entry.clockIn}"`);
+    try {
+      // Pastikan clockIn dan clockOut dalam format "HH:mm"
+      const payload = {
+        ...entry,
+        clockIn: entry.clockIn?.trim(), // Hapus spasi
+        clockOut: entry.clockOut?.trim() || null,
+      };
+
+      console.log("Sending payload:", payload); // Debug
+
+      const { data } = await apiClient.post<{
+        success: boolean;
+        data: Attendance;
+      }>("/admin/attendance/manual-entry", payload);
+      return data.data;
+    } catch (error) {
+      throw getErrorMessage(error, "Gagal menambahkan presensi manual.");
+    }
   },
 };

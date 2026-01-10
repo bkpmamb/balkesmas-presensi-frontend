@@ -178,17 +178,12 @@ export function useAttendances() {
 
   // Form handlers
   const handleManualEntrySubmit = async (formData: ManualEntryFormValues) => {
-    const clockInDateTime = `${formData.date}T${formData.clockIn}:00.000Z`;
-    const clockOutDateTime = formData.clockOut
-      ? `${formData.date}T${formData.clockOut}:00.000Z`
-      : undefined;
-
     const entry: ManualEntryDto = {
       userId: formData.userId,
       shiftId: formData.shiftId,
-      date: formData.date,
-      clockIn: clockInDateTime,
-      clockOut: clockOutDateTime,
+      date: formData.date, // Format: "YYYY-MM-DD"
+      clockIn: formData.clockIn, // Format: "HH:mm"
+      clockOut: formData.clockOut?.trim() || undefined, // Format: "HH:mm" atau undefined
       notes: formData.notes,
     };
 

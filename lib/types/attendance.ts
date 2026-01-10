@@ -5,6 +5,7 @@ export interface Shift {
   _id: string;
   name: string;
   startTime: string;
+  category?: string | { _id: string; name: string };
   endTime: string;
 }
 
@@ -191,4 +192,42 @@ export interface ExportParams {
   includePhotos?: boolean;
   sortBy?: string;
   sortOrder?: string;
+}
+
+export interface ManualEntryEmployee {
+  employee: {
+    _id: string;
+    name: string;
+    employeeId: string;
+    category?: {
+      _id: string;
+      name: string;
+      prefix: string;
+    };
+  };
+  schedule: {
+    _id: string;
+    dayOfWeek: number;
+  };
+  shift: {
+    _id: string;
+    name: string;
+    startTime: string;
+    endTime: string;
+    toleranceMinutes?: number;
+  };
+}
+
+export interface ManualEntryAvailableResponse {
+  success: boolean;
+  message: string;
+  data: {
+    date: string;
+    dayOfWeek: number;
+    dayName: string;
+    employees: ManualEntryEmployee[];
+    totalScheduled: number;
+    totalAttended: number;
+    totalAvailable: number;
+  };
 }
