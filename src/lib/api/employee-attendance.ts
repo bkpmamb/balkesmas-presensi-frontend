@@ -1,5 +1,6 @@
 // src/lib/api/employee-attendance.ts
 
+import { getErrorMessage } from "../utils/getErrorMessage";
 import apiClient from "./client";
 import type {
   EmployeeProfile,
@@ -10,116 +11,156 @@ import type {
   EmployeeStatistics,
   ChangePasswordDto,
   GenericResponse,
-  // AttendanceSummary,
-  // PaginationData,
   AttendanceHistoryResponse,
   WorkSchedule,
   EmployeeInitResponse,
 } from "@/lib/types/employee-attendance";
 
 export const employeeAttendanceApi = {
-  // Get profile
-  getProfile: async (): Promise<EmployeeProfile> => {
-    const { data } = await apiClient.get<{
-      success: boolean;
-      data: EmployeeProfile;
-    }>("/employee/profile");
-    return data.data;
+
+  // Get init data (profile + schedule + attendance)
+  getInit: async (): Promise<EmployeeInitResponse> => {
+    try {
+      const { data } = await apiClient.get<{
+        success: boolean;
+        data: EmployeeInitResponse;
+      }>("/employee/init");
+      return data.data;
+    } catch (error) {
+      throw getErrorMessage(error, "Gagal memuat data. Silakan coba lagi.");
+    }
   },
 
-  // Get today's schedule
+  getProfile: async (): Promise<EmployeeProfile> => {
+    try {
+      const { data } = await apiClient.get<{
+        success: boolean;
+        data: EmployeeProfile;
+      }>("/employee/profile");
+      return data.data;
+    } catch (error) {
+      throw getErrorMessage(error, "Gagal memuat profil.");
+    }
+  },
+
   getTodaySchedule: async (): Promise<TodaySchedule | null> => {
-    const { data } = await apiClient.get<{
-      success: boolean;
-      data: TodaySchedule | null;
-    }>("/employee/schedule/today");
-    return data.data;
+    try {
+      const { data } = await apiClient.get<{
+        success: boolean;
+        data: TodaySchedule | null;
+      }>("/employee/schedule/today");
+      return data.data;
+    } catch (error) {
+      throw getErrorMessage(error, "Gagal memuat jadwal hari ini.");
+    }
   },
 
   getAllSchedules: async (): Promise<WorkSchedule[]> => {
-    const { data } = await apiClient.get<{
-      success: boolean;
-      data: WorkSchedule[];
-    }>("/employee/schedules");
-    return data.data;
+    try {
+      const { data } = await apiClient.get<{
+        success: boolean;
+        data: WorkSchedule[];
+      }>("/employee/schedules");
+      return data.data;
+    } catch (error) {
+      throw getErrorMessage(error, "Gagal memuat semua jadwal.");
+    }
   },
 
-  // Get today's attendance
   getTodayAttendance: async (): Promise<TodayAttendance | null> => {
-    // Tambahkan timestamp agar Vercel tidak memberikan data cache
-    const timestamp = new Date().getTime();
-    const { data } = await apiClient.get<{
-      success: boolean;
-      data: TodayAttendance | null;
-    }>(`/employee/attendance/today?t=${timestamp}`); // ada t
+    try {
+      const timestamp = new Date().getTime();
+      const { data } = await apiClient.get<{
+        success: boolean;
+        data: TodayAttendance | null;
+      }>(`/employee/attendance/today?t=${timestamp}`); // ada t
 
-    return data.data;
+      return data.data;
+    } catch (error) {
+      throw getErrorMessage(error, "Gagal memuat data presensi hari ini.");
+    }
   },
 
   clockIn: async (formData: FormData): Promise<ClockInResponse> => {
-    const { data } = await apiClient.post<ClockInResponse>(
-      "/attendance/clock-in",
-      formData,
-      {
-        // Biarkan kosong agar browser otomatis membuat:
-        // Content-Type: multipart/form-data; boundary=----WebKitFormBoundary...
-        headers: {},
-      }
-    );
-    return data;
+    try {
+      const { data } = await apiClient.post<ClockInResponse>(
+        "/attendance/clock-in",
+        formData,
+        {
+          headers: {},
+        }
+      );
+      return data;
+    } catch (error) {
+      throw getErrorMessage(
+        error,
+        "Gagal melakukan clock in. Silakan coba lagi."
+      );
+    }
   },
 
   clockOut: async (formData: FormData): Promise<ClockOutResponse> => {
-    const { data } = await apiClient.post<ClockOutResponse>(
-      "/attendance/clock-out",
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-    return data;
+    try {
+      const { data } = await apiClient.post<ClockOutResponse>(
+        "/attendance/clock-out",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return data;
+    } catch (error) {
+      throw getErrorMessage(
+        error,
+        "Gagal melakukan clock out. Silakan coba lagi."
+      );
+    }
   },
 
   getStatistics: async (): Promise<EmployeeStatistics> => {
-    const { data } = await apiClient.get<{
-      success: boolean;
-      data: EmployeeStatistics;
-    }>("/employee/statistics");
-    return data.data;
+    try {
+      const { data } = await apiClient.get<{
+        success: boolean;
+        data: EmployeeStatistics;
+      }>("/employee/statistics");
+      return data.data;
+    } catch (error) {
+      throw getErrorMessage(error, "Gagal memuat statistik.");
+    }
   },
 
   getAttendanceHistory: async (params?: {
     page?: number;
     limit?: number;
   }): Promise<AttendanceHistoryResponse> => {
-    const query = new URLSearchParams();
-    if (params?.page) query.append("page", params.page.toString());
-    if (params?.limit) query.append("limit", params.limit.toString());
+    try {
+      const query = new URLSearchParams();
+      if (params?.page) query.append("page", params.page.toString());
+      if (params?.limit) query.append("limit", params.limit.toString());
 
-    const { data } = await apiClient.get<AttendanceHistoryResponse>(
-      `/employee/attendance/history?${query.toString()}`
-    );
+      const { data } = await apiClient.get<AttendanceHistoryResponse>(
+        `/employee/attendance/history?${query.toString()}`
+      );
 
-    return data;
+      return data;
+    } catch (error) {
+      throw getErrorMessage(error, "Gagal memuat riwayat presensi.");
+    }
   },
 
   changePassword: async (
     passwords: ChangePasswordDto
   ): Promise<GenericResponse> => {
-    const { data } = await apiClient.put<{ success: boolean; message: string }>(
-      "/employee/profile/change-password",
-      passwords
-    );
-    return data;
-  },
-
-  getInit: async (): Promise<EmployeeInitResponse> => {
-    const { data } = await apiClient.get<{
-      success: boolean;
-      data: EmployeeInitResponse;
-    }>("/employee/init");
-    return data.data;
+    try {
+      const { data } = await apiClient.put<{
+        success: boolean;
+        message: string;
+      }>("/employee/profile/change-password", passwords);
+      return data;
+    } catch (error) {
+      throw getErrorMessage(error, "Gagal mengubah password.");
+    }
   },
 };

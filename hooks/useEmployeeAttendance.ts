@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/src/lib/store/authStore";
 import { employeeAttendanceApi } from "@/src/lib/api/employee-attendance";
 import { createTimer } from "@/src/lib/utils/logger";
-import type { ApiError } from "@/lib/types/api";
 import type {
   GeolocationState,
   CameraState,
@@ -116,8 +115,6 @@ export function useEmployeeAttendance() {
       toast.success(data.message);
       resetState();
     },
-    onError: (error: ApiError) =>
-      toast.error(error.message || "Gagal clock in"),
   });
 
   const clockOutMutation = useMutation({
@@ -127,8 +124,6 @@ export function useEmployeeAttendance() {
       toast.success(data.message);
       resetState();
     },
-    onError: (error: ApiError) =>
-      toast.error(error.message || "Gagal clock out"),
   });
 
   // --- GEOLOCATION DENGAN REVERSE GEOCODE ---
@@ -269,17 +264,12 @@ export function useEmployeeAttendance() {
       } else {
         await clockOutMutation.mutateAsync(formData);
       }
-    } catch (err) {
-      console.error("Submit Attendance Error:", err);
-      const apiError = err as ApiError;
-
-      if (apiError?.message) {
-        toast.error(apiError.message);
-      } else if (apiError?.response?.data?.message) {
-        toast.error(apiError.response.data.message);
-      } else {
-        toast.error("Gagal memproses presensi. Silakan coba lagi.");
-      }
+    } catch (error) {
+      // Single place untuk handle error
+      const err = error as Error;
+      toast.error(
+        err.message || "Gagal memproses presensi. Silakan coba lagi."
+      );
     }
   }, [
     geolocation,
