@@ -45,8 +45,6 @@ interface AttendancesDialogsProps {
 export function AttendancesDialogs({
   dialogState,
   selectedAttendance,
-  employees,
-  shifts,
   isCreating,
   isDeleting,
   onCloseDialog,
@@ -68,8 +66,6 @@ export function AttendancesDialogs({
             </DialogDescription>
           </DialogHeader>
           <ManualEntryForm
-            employees={employees}
-            shifts={shifts}
             onSubmit={onManualEntrySubmit}
             isLoading={isCreating}
           />
