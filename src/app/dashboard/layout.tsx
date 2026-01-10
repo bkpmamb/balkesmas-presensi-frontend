@@ -1,11 +1,15 @@
 // src/app/(dashboard)/layout.tsx
 
 "use client";
-import { useState } from "react";
+
+import { useState, useCallback, memo } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { cn } from "@/lib/utils";
+
+const MemoizedSidebar = memo(Sidebar);
+const MemoizedHeader = memo(Header);
 
 export default function DashboardLayout({
   children,
@@ -13,17 +17,26 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
+  const toggleSidebar = useCallback(() => {
+    setIsSidebarOpen((prev) => !prev);
+  }, []);
+
+  const closeSidebar = useCallback(() => {
+    setIsSidebarOpen(false);
+  }, []);
 
   return (
     <AuthGuard allowedRoles={["admin"]}>
       <div className="flex h-screen overflow-hidden">
+        {/* Overlay - hanya render saat sidebar open di mobile */}
         {isSidebarOpen && (
           <div
             className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-            onClick={() => setIsSidebarOpen(false)}
+            onClick={closeSidebar}
           />
         )}
+
         {/* Sidebar */}
         <aside
           className={cn(
@@ -31,12 +44,12 @@ export default function DashboardLayout({
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
-          <Sidebar onClose={() => setIsSidebarOpen(false)} />
+          <MemoizedSidebar onClose={closeSidebar} />
         </aside>
 
         {/* Main Content */}
         <div className="flex flex-1 flex-col overflow-hidden">
-          <Header onMenuClick={toggleSidebar} />
+          <MemoizedHeader onMenuClick={toggleSidebar} />
           <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
             {children}
           </main>

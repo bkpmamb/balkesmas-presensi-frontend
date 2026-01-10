@@ -11,8 +11,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: null,
   isAuthenticated: false,
+  isInitializing: true, // ✅ Tambahkan loading state
 
-  initialize: () => {
+  initialize: async () => {
+    const timer = createTimer("AUTH_INITIALIZE");
+
     if (typeof window !== "undefined") {
       const token =
         sessionStorage.getItem("token") || localStorage.getItem("token");
@@ -29,9 +32,26 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
 
       if (token && user) {
+        timer.lap("Token found, warming up backend");
+
+        // ✅ Warm up backend SEBELUM set authenticated
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+        try {
+          await fetch(`${apiUrl}/health`);
+          timer.lap("Backend warmed up");
+        } catch {
+          timer.lap("Backend warming up in background...");
+        }
+
         console.log(`🔄 Initializing ${user.role} auth`);
-        set({ token, user, isAuthenticated: true });
+        set({ token, user, isAuthenticated: true, isInitializing: false });
+        timer.stop("Auth initialized with existing token");
+      } else {
+        timer.stop("No existing auth found");
+        set({ isInitializing: false });
       }
+    } else {
+      set({ isInitializing: false });
     }
   },
 
