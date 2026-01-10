@@ -97,10 +97,10 @@ export function useEmployeeAttendance() {
         throw error;
       }
     },
-    staleTime: 0,
-    refetchOnMount: "always",
-    gcTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 30000,
+    // refetchOnMount: "always",
+    gcTime: 60000,
+    refetchOnWindowFocus: false,
   });
 
   // ✅ Extract data dari single response

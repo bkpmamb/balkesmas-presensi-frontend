@@ -2,6 +2,7 @@
 
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -12,6 +13,15 @@ interface EmployeeGreetingProps {
 }
 
 export function EmployeeGreeting({ name }: EmployeeGreetingProps) {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  });
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Selamat Pagi";
@@ -23,10 +33,10 @@ export function EmployeeGreeting({ name }: EmployeeGreetingProps) {
   return (
     <motion.div variants={attendanceAnimations.item} className="text-center">
       <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-        {getGreeting()}, {name?.split(" ")[0] ?? "User"}! 👋
+        {getGreeting()}, {name?.split(" ")[0] ?? "User"}!
       </h2>
       <p className="text-gray-500 mt-1">
-        {format(new Date(), "EEEE, dd MMMM yyyy", { locale: id })}
+        {format(now, "EEEE, dd MMMM yyyy • HH:mm:ss", { locale: id })}
       </p>
     </motion.div>
   );
