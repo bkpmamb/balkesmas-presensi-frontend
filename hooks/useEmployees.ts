@@ -48,6 +48,12 @@ export function useEmployees() {
         limit: 10,
         search: filters.search,
         category: filters.category,
+        isActive:
+          filters.status === "active"
+            ? true
+            : filters.status === "inactive"
+            ? false
+            : undefined,
       }),
   });
 

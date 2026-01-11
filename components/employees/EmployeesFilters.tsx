@@ -37,7 +37,7 @@ export function EmployeesFilters({
       <div className="relative w-full md:max-w-sm">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Cari nama atau ID karyawan..."
+          placeholder="Cari nama karyawan..."
           value={filters.search}
           onChange={(e) => onFilterChange("search", e.target.value)}
           className="pl-10 w-full"
