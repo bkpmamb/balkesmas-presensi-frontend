@@ -8,6 +8,10 @@ import { useAuthStore } from "@/src/lib/store/authStore";
 import { createTimer } from "@/src/lib/utils/logger";
 import { Loader2 } from "lucide-react";
 
+import { employeeAttendanceApi } from "@/src/lib/api/employee-attendance";
+import { dashboardApi } from "@/src/lib/api/dashboard";
+import { useQueryClient } from "@tanstack/react-query";
+
 interface AuthGuardProps {
   children: React.ReactNode;
   allowedRoles?: ("admin" | "employee")[];
@@ -19,6 +23,7 @@ export function AuthGuard({
 }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
   const { isAuthenticated, user, initialize } = useAuthStore();
   const [isInitializing, setIsInitializing] = useState(true);
 
@@ -26,11 +31,10 @@ export function AuthGuard({
     const init = async () => {
       const timer = createTimer("AUTH_GUARD_INIT");
 
-      // ✅ Initialize auth dari storage
       timer.lap("Initializing auth from storage");
       initialize();
 
-      // ✅ Warm up backend parallel (non-blocking)
+      // Warm up backend
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
       try {
         timer.lap("Warming up backend");
@@ -47,17 +51,49 @@ export function AuthGuard({
     init();
   }, [initialize]);
 
+  // ✅ Prefetch data berdasarkan role setelah authenticated
   useEffect(() => {
-    // Skip jika masih initializing atau di login page
+    if (!isAuthenticated || !user || isInitializing) return;
+
+    const prefetchData = async () => {
+      try {
+        if (user.role === "employee") {
+          // Prefetch employee init data
+          queryClient.prefetchQuery({
+            queryKey: ["employee-init"],
+            queryFn: employeeAttendanceApi.getInit,
+            staleTime: 30000,
+          });
+        } else if (user.role === "admin") {
+          // Prefetch dashboard data
+          queryClient.prefetchQuery({
+            queryKey: ["dashboard-stats"],
+            queryFn: dashboardApi.getStats,
+            staleTime: 30000,
+          });
+          queryClient.prefetchQuery({
+            queryKey: ["today-summary"],
+            queryFn: dashboardApi.getTodaySummary,
+            staleTime: 30000,
+          });
+        }
+      } catch (error) {
+        // Silently fail - prefetch is optional optimization
+        console.warn("Prefetch failed:", error);
+      }
+    };
+
+    prefetchData();
+  }, [isAuthenticated, user, isInitializing, queryClient]);
+
+  useEffect(() => {
     if (isInitializing || pathname === "/login") return;
 
-    // Redirect ke login jika tidak authenticated
     if (!isAuthenticated) {
       router.push("/login");
       return;
     }
 
-    // Check role-based access
     if (user && !allowedRoles.includes(user.role)) {
       if (user.role === "admin") {
         router.push("/dashboard");

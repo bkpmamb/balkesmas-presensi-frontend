@@ -1,12 +1,17 @@
 // src/lib/utils/geocoding.ts
 
 /**
- * Mengambil nama alamat berdasarkan koordinat menggunakan OpenStreetMap (Gratis)
+ * Mengambil nama alamat berdasarkan koordinat menggunakan OpenStreetMap
+ * Dengan timeout dan retry mechanism
  */
 export const getAddressFromCoords = async (
   lat: number,
-  lon: number
+  lon: number,
+  retries = 2
 ): Promise<string> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
   try {
     // User-Agent wajib diisi sesuai kebijakan penggunaan Nominatim
     const response = await fetch(
@@ -18,6 +23,8 @@ export const getAddressFromCoords = async (
         },
       }
     );
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) throw new Error("Network response was not ok");
 
@@ -33,7 +40,13 @@ export const getAddressFromCoords = async (
 
     return `${road}${road && city ? ", " : ""}${city}`;
   } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (retries > 0 && error instanceof Error && error.name !== "AbortError") {
+      console.warn(`Geocoding retry, attempts left: ${retries}`);
+      return getAddressFromCoords(lat, lon, retries - 1);
+    }
     console.error("Geocoding Error:", error);
-    return "Gagal memuat alamat";
+    return "Lokasi terdeteksi";
   }
 };
