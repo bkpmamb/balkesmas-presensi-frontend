@@ -3,7 +3,6 @@
 import { create } from "zustand";
 import { authApi } from "../api/auth";
 import type { AuthState, User } from "@/lib/types/auth";
-import type { ApiError } from "@/lib/types/api";
 import { toast } from "sonner";
 import { createTimer } from "@/src/lib/utils/logger";
 
@@ -100,8 +99,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       toast.success("Login berhasil!");
     } catch (error) {
       timer.stop("Auth store login failed");
-      const apiError = error as ApiError;
-      toast.error(apiError.message || "Login gagal");
       throw error;
     }
   },
