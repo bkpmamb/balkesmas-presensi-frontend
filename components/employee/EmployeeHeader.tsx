@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, ChevronDown, History, RotateCcwKey } from "lucide-react";
+import { LogOut, User, ChevronDown, RotateCcwKey, CalendarRange, CalendarSearch } from "lucide-react";
 import { attendanceAnimations } from "@/config/employee.config";
 import type { EmployeeProfile } from "@/lib/types/employee-attendance";
 import Link from "next/link";
@@ -81,12 +81,21 @@ export function EmployeeHeader({ profile, onLogout }: EmployeeHeaderProps) {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <History className="mr-2 h-4 w-4" />
+              <CalendarSearch className="mr-2 h-4 w-4" />
               <Link
                 href="/employee/history"
                 className="flex items-center w-full cursor-pointer"
               >
                 Riwayat Presensi
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <CalendarRange className="mr-2 h-4 w-4" />
+              <Link
+                href="/employee/leave"
+                className="flex items-center w-full cursor-pointer"
+              >
+                Pengajutan Cuti / Izin
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>

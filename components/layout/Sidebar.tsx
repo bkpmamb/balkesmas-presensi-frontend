@@ -13,6 +13,7 @@ import {
   ClipboardList,
   Settings,
   LogOut,
+  CalendarDays,
   // X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,11 @@ const navigation = [
     name: "Presensi",
     href: "/dashboard/attendances",
     icon: ClipboardList,
+  },
+  {
+    name: "Cuti & Izin",
+    href: "/dashboard/leave",
+    icon: CalendarDays,
   },
   {
     name: "Pengaturan",
